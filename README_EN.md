@@ -105,9 +105,15 @@ PaperFlow no longer invokes local MinerU and does not need GPU PyTorch. API pars
 
 Reading and source folders must be separate and non-nested. `--include-partial` explicitly exports labeled abstract-only copies. `--pdf`, `--pdf-url` and Elsevier `--xml` are mutually exclusive. See each command's `--help`.
 
-## Scope and verification
+## Literature acquisition and PDF processing
 
-See [Validation scope](docs/VALIDATION.en.md) for historical representative-paper acceptance and unresolved samples. Routes include Elsevier, Springer/Nature, Building Simulation, IEEE/CVF/arXiv, Wiley, PLOS, Frontiers, eLife, Europe PMC, Copernicus, MDPI resources, JMLR and PMLR.
+Implemented routes include Elsevier, Springer Nature, IEEE, Wiley, Taylor & Francis, MDPI, PLOS, Frontiers, eLife, AAAS, Copernicus, ACM, IOP, AIP, APS and ASCE, with additional CVPR/CVF, arXiv, JMLR and PMLR paper entry points.
+
+**Springer Nature coverage is not limited to Building Simulation.** Existing routes include OA full text from Springer, Nature Portfolio and BMC journals, using available structured full text or public PDFs per article. Configured Elsevier APIs can obtain entitled full-text XML.
+
+**If automatic acquisition does not obtain the article body, supply a PDF:** keep its original filename, place the matching main article in the indicated paper folder, and run the single/batch recovery CMD. MinerU API conversion then adds Markdown to the original reading folder. If parsing alone failed, fix the error and retry the existing PDF without downloading again. See the [PDF recovery guide](docs/USAGE.en.md).
+
+Open access does not guarantee automated acquisition of every article. Consult the processing record for source, access and full-text checks.
 
 Acquisition, article identity, completeness and Markdown conversion are separate stages. Accepted manuscripts/preprints are not silently treated as published versions. Preserve body text, references and reliable structured tables; omit image binaries and standalone display equations. OCR and scientific notation may require human review.
 

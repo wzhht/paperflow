@@ -188,9 +188,15 @@ PaperFlow不再调用本地MinerU，环境不必装GPU PyTorch。API转换可能
 
 `--pdf`、`--pdf-url`、`--xml` 三选一。阅读目录与原始目录必须分开，不能相互包含。`export-markdown --include-partial` 可显式导出带 `[ABSTRACT ONLY]` 标记的摘要。更多参数用各命令的 `--help` 查看。
 
-## 范围和质量边界
+## 文献获取与PDF处理
 
-已有Elsevier、Springer/Nature、Building Simulation、IEEE/CVF/arXiv、Wiley、PLOS、Frontiers、eLife、Europe PMC、Copernicus、MDPI资源文件、JMLR/PMLR等路线。**识别DOI不代表该出版社全部期刊都能下载**。代表样本及未解决项目见 [验收范围](docs/VALIDATION.md)。
+支持Elsevier、Springer Nature、IEEE、Wiley、Taylor & Francis、MDPI、PLOS、Frontiers、eLife、AAAS、Copernicus，以及ACM、IOP、AIP、APS、ASCE等已实现的文献获取路线；另外提供CVPR/CVF、arXiv、JMLR和PMLR等论文入口。
+
+**Springer Nature并非只支持Building Simulation。** 已有路线包括Springer、Nature Portfolio和BMC等期刊的开放获取（OA）全文；根据具体文章可取得的来源，使用结构化全文或公开PDF处理。Elsevier可通过配置的API获取具有授权的全文XML。
+
+**自动获取未取得正文时，可以自行补PDF：** 保留下载时的原文件名，将对应论文正文放入提示的论文目录，再双击单篇或批量转换CMD。程序使用MinerU API继续转换，并将Markdown补进原来的阅读目录。PDF已存在、仅解析失败时，排除错误后直接重试即可，无需重新下载。详细操作见 [补PDF操作手册](docs/USAGE.zh-CN.md)。
+
+OA表示开放获取，不保证每篇都能被程序自动取得；具体来源、访问状态和全文检查结果以本次处理记录为准。
 
 正文、References和可靠的结构化表格数值尽量保留；不输出图片本体，独立展示公式可移除，行内科学量尽量保留。不会伪造图片表格。OCR、公式、复杂排版仍可能有错，重要内容需回看原文。
 

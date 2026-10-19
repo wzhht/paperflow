@@ -36,12 +36,7 @@ V3新增或扩展的出版社/期刊路线如下。表中“通过”指已有�
 | PMLR | 会议论文集，已有1篇样本并完成实际Markdown转换 | 通过官方论文页入口处理，与期刊区分 |
 | Europe PMC | 补充公开全文XML的公共仓储来源 | 不是出版社；按具体论文检查，不作为独立出版社验收通过的承诺 |
 
-**已实现入口，但仍有受阻或待核验样本：**
-
-- **ACS**：包括ACS Energy Letters；此前OA样本仍遇浏览器验证，另一订阅样本未取得授权全文。
-- **SAGE**：公开来源已定位，但代表样本仍存在访问/证书问题。
-- **ASME**：一篇OA样本受网站验证影响；另一篇有接收稿，出版版及独立完整性核验仍未完成。
-- **OpenReview**：平台入口已实现，但代表样本自动访问403；同篇经PMLR入口通过，不等于OpenReview路线已验收。
+**自动获取失败时的处理：** 自行取得对应论文正文PDF，保留原文件名放入提示目录，双击单篇或批量转换入口，继续生成Markdown。已有PDF但解析失败时，处理API、网络或文件错误后重试，无需重复下载。
 
 其他被识别的DOI前缀可能仅使用通用公开全文定位或用户提供PDF，不据此列为已全面支持的出版社。详细历史样本与边界见[验收范围](https://github.com/wzhht/paperflow/blob/main/docs/VALIDATION.md)。
 
@@ -55,7 +50,7 @@ V3新增或扩展的出版社/期刊路线如下。表中“通过”指已有�
 - 扩展公开全文定位、原生XML/HTML/EPUB/TEI导入、Wiley TDM及更多平台入口。
 - 提供详细中英文安装、操作、状态解释和发布说明；根目录移除历史检测CMD，开发检测脚本保留。
 
-需要Python 3.10和自己的API配置。源码包不含 `.env`、虚拟环境、论文或模型。PDF上传MinerU可能消耗额度；Elsevier全文XML仍取决于授权及网络。warning可能表示摘要，也可能是已有正文但仍待核验，需查看QA。公开路线不等于所有文章均可获取；部分ACS/SAGE/ASME/OpenReview样本仍受阻或待核验。原文图像不进入最终MD，复杂排版与科学量需要回看原文。
+需要Python 3.10和自己的API配置。源码包不含 `.env`、虚拟环境、论文或模型。PDF上传MinerU可能消耗额度；Elsevier全文XML仍取决于授权及网络。warning可能表示摘要，也可能是已有正文但仍待核验，需查看QA。自动获取未取得正文时，可自行补PDF继续转换。原文图像不进入最终MD，复杂排版与科学量需要回看原文。
 
 ## English
 
@@ -91,12 +86,7 @@ The following routes are new or expanded. Representative acceptance concerns spe
 | PMLR | Conference proceedings; 1 sample with actual Markdown conversion | Official paper-page input, distinct from journals |
 | Europe PMC | Additional public full-text XML repository | Not a publisher or a separate publisher-wide acceptance claim |
 
-**Implemented entry points with blocked or incompletely verified samples:**
-
-- **ACS**, including ACS Energy Letters: an OA sample still met browser verification; another subscription sample lacked authorized full text.
-- **SAGE**: public sources located, but the representative sample had access/certificate issues.
-- **ASME**: an OA sample met website verification; another has an accepted manuscript, with published-version/independent completeness checks still incomplete.
-- **OpenReview**: platform input implemented, but the sample returned HTTP 403. Acceptance through PMLR for the same paper does not validate the OpenReview route.
+**When automatic acquisition fails:** obtain the matching main-article PDF, keep its original filename in the indicated folder, and use the single/batch recovery launcher. If parsing alone failed, resolve API, network or file errors and retry the preserved PDF.
 
 Other recognized DOI prefixes may only use generic public discovery or user-supplied PDFs and are not advertised as fully supported publishers. See the [detailed validation scope](https://github.com/wzhht/paperflow/blob/main/docs/VALIDATION.en.md).
 
@@ -110,4 +100,4 @@ Other recognized DOI prefixes may only use generic public discovery or user-supp
 - Extended public-source discovery, native XML/HTML/EPUB/TEI imports, Wiley TDM and academic platform routes.
 - Detailed bilingual setup, usage, status and publishing guides; obsolete root diagnostic launchers removed.
 
-Requires Python 3.10 and user-owned API credentials. Source archives exclude credentials, environments, papers and models. MinerU uploads may consume credits; licensed Elsevier XML depends on entitlement/network. Warnings may indicate abstract-only content or generated body text still requiring verification. Routes do not guarantee every article is available; some ACS/SAGE/ASME/OpenReview samples remain blocked or incompletely verified. Image binaries are omitted from final Markdown; important scientific details still require comparison with the source.
+Requires Python 3.10 and user-owned API credentials. Source archives exclude credentials, environments, papers and models. MinerU uploads may consume credits; licensed Elsevier XML depends on entitlement/network. Warnings may indicate abstract-only content or generated body text still requiring verification. If automated acquisition does not obtain the body, user-supplied PDFs can continue the conversion workflow. Image binaries are omitted from final Markdown; important scientific details still require comparison with the source.
