@@ -27,6 +27,16 @@ def _make_pdf(
     return buffer.getvalue()
 
 
+def test_metadata_page_range_rejects_first_page_preview():
+    xml = b"<root><coredata><startingPage>274</startingPage><endingPage>282</endingPage></coredata></root>"
+    expectation = extract_elsevier_pdf_expectation(xml)
+    assert expectation.expected_pages == 9
+    preview = validate_pdf_bytes(_make_pdf(1), expectation)
+    assert preview.parseable and not preview.is_valid
+    assert preview.status == "invalid_page_count"
+    assert validate_pdf_bytes(_make_pdf(9), expectation).is_valid
+
+
 def test_extracts_elsevier_main_pdf_expectation():
     xml = """
 <root xmlns:xocs="urn:xocs">

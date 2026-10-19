@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Literal
@@ -21,6 +22,8 @@ class PdfExpectation:
     filename: str | None
     expected_pages: int | None
     expected_bytes: int | None
+    first_page: int | None = None
+    last_page: int | None = None
 
 
 @dataclass(frozen=True)
@@ -40,6 +43,61 @@ class PdfValidationResult:
     byte_ratio_expected: float | None
 
     reason: str
+
+
+def inspect_pdf_page_sequence(content, doi, expectation=None):
+    """Additional positive proof from publisher pagination; never infer missing pages.
+
+    Either every page carries a consistent 'page of total', or up to three
+    recognizable front sheets precede the complete bibliographic page range.
+    The requested DOI must be present on the first article page in both cases.
+    """
+    failed = {"verified": False}
+    if not doi:
+        return failed
+    try:
+        reader = PdfReader(BytesIO(content), strict=False)
+        if not 2 <= len(reader.pages) <= 500:
+            return failed
+        texts = [page.extract_text() or "" for page in reader.pages]
+    except (PdfReadError, PdfStreamError, EOFError, OSError, ValueError, NotImplementedError):
+        return failed
+    compact_doi = re.sub(r"\s+", "", doi).casefold()
+
+    def identity(text):
+        return (compact_doi in re.sub(r"\s+", "", text).casefold()
+                and bool(re.search(r"\babstract\b", text, re.IGNORECASE)))
+
+    total = len(texts)
+    first_counters = re.findall(r"(?<!\d)(\d+)\s+of\s+(\d+)(?!\d)",
+                                texts[0][:900] + "\n" + texts[0][-900:], re.IGNORECASE)
+    if (identity(texts[0]) and (expectation is None or expectation.expected_pages is None)
+            and all(counter == ('1', str(total)) for counter in first_counters)
+            and all((str(index), str(total)) in re.findall(r"(?<!\d)(\d+)\s+of\s+(\d+)(?!\d)",
+                    text[:900] + "\n" + text[-900:], re.IGNORECASE)
+                    for index, text in enumerate(texts[1:], 2))):
+        return {"verified": True, "method": "publisher_page_of_total", "body_pages": total,
+                "front_pages": 0, "doi_matched": True}
+    if expectation is None or expectation.first_page is None or expectation.last_page is None:
+        return failed
+    first, last = expectation.first_page, expectation.last_page
+    expected = last - first + 1
+    front = total - expected
+    if not (expected == expectation.expected_pages and 1 <= front <= 3):
+        return failed
+    markers = ("citation for published version", "document version", "to cite this article:")
+    if not all(any(marker in text.lower() for marker in markers) for text in texts[:front]):
+        return failed
+    if not identity(texts[front]):
+        return failed
+    if not re.search(rf"\b{first}\s*[-–—]\s*{last}\b", texts[front]):
+        return failed
+    if not all((re.search(rf"(?m)^[^\n]*\b{number}\s*$", text[-900:])
+                or re.search(rf"(?m)^\s*{number}\s+[A-Z][A-Z .,&'’–-]{{2,100}}\s*$", text[-900:]))
+               for number, text in zip(range(first + 1, last + 1), texts[front + 1:])):
+        return failed
+    return {"verified": True, "method": "publisher_range_with_front_sheets", "front_pages": front,
+            "body_pages": expected, "first_page": first, "last_page": last, "doi_matched": True}
 
 
 def _safe_int(
@@ -92,10 +150,19 @@ def extract_elsevier_pdf_expectation(
     pdf_nodes = root.xpath("//*[local-name()='web-pdf']")
 
     if not pdf_nodes:
+        # Metadata-only API responses can still expose the article's page range.
+        # A valid PDF signature alone must not allow a one-page publisher preview.
+        core = root.xpath("//*[local-name()='coredata']")
+        expected_pages = None
+        if core:
+            start = _safe_int(_child_text(core[0], "startingPage"))
+            end = _safe_int(_child_text(core[0], "endingPage"))
+            if start is not None and end is not None and end >= start:
+                expected_pages = end - start + 1
         return PdfExpectation(
             attachment_eid=None,
             filename=None,
-            expected_pages=None,
+            expected_pages=expected_pages,
             expected_bytes=None,
         )
 
@@ -237,7 +304,7 @@ def validate_pdf_bytes(
                 actual_bytes=actual_bytes,
                 expected_bytes=expected_bytes,
                 byte_ratio_expected=(byte_ratio_expected),
-                reason=("Downloaded PDF page count does not match Elsevier XML metadata."),
+                reason=("Downloaded PDF page count does not match source metadata."),
             )
 
         return PdfValidationResult(
@@ -251,7 +318,7 @@ def validate_pdf_bytes(
             actual_bytes=actual_bytes,
             expected_bytes=expected_bytes,
             byte_ratio_expected=(byte_ratio_expected),
-            reason=("PDF page count matches Elsevier XML metadata."),
+            reason=("PDF page count matches source metadata."),
         )
 
     return PdfValidationResult(

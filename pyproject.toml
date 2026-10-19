@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paperflow"
-version = "0.2.0"
+version = "0.3.0"
 description = "Focused academic paper acquisition and LLM-ready Markdown pipeline."
 readme = "README.md"
 requires-python = ">=3.10,<3.11"
@@ -17,6 +17,7 @@ dependencies = [
     "python-dotenv",
     "lxml",
     "pypdf",
+    "fonttools>=4.60,<5",
     "typer",
     "rich",
 ]

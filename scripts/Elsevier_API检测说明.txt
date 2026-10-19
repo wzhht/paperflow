@@ -1,0 +1,43 @@
+Elsevier API 专项检测
+
+最简单的使用方法
+1. 双击项目根目录「测试Elsevier_API.cmd」。
+2. 第一行直接回车，使用默认测试文章；如需换文章，再输入 10.1016/... DOI。此处不是 API key 输入框。
+3. 粘贴要测试的 API key 并回车，输入不会显示；不是程序卡住。
+4. 机构 token 没有就直接回车。等待五项检测结束。
+5. 回车继续测下一个 key，输入 q 结束并显示汇总。
+每个 key 单独保存检测结果，密钥不保存，不改 .env。
+
+读取配置
+双击启动默认是手动比较模式：只使用本次输入，不读取 .env 中的密钥。
+下面是未加 --compare-keys 的命令行模式行为：
+从 D:\paper\paperflow-v2\.env 读取 ELSEVIER_API_KEY，同时兼容系统环境变量；系统变量优先。
+可选机构 token：ELSEVIER_INSTTOKEN 或 ELSEVIER_INST_TOKEN（仅使用你获得授权的 token）。
+不需要把 API key 输入到窗口，不打印密钥，不保存请求头。
+
+结果含义
+XML：使用 PaperFlow 现有正文结构检查，摘要/元数据不算全文。
+PDF：使用出版商 XML 的正文 PDF 页数或起止页核对实际 PDF 页数。
+PDF格式正确、HTTP 200、权限查询返回200，都不等于取得全文。
+没有页数依据的PDF标记为完整性未验证，不算成功；非200/重定向仅报告，不跟随到外部站点。
+页数或正文结构通过是自动检测结果，仍可打开文件人工核查。
+不完整或未经验证的PDF文件名带_UNVERIFIED，不要当作全文使用。
+
+保存位置
+workspace\elsevier_api_tests\时间_文章标识_随机编号。
+每次新建独立检测目录，不覆盖旧结果，不读取以前的全文。
+只保存收到的XML/PDF、脱敏状态报告；不调用MinerU，不使用GPU，不修改原文献库。
+
+命令行
+cd /d D:\paper\paperflow-v2
+.venv\Scripts\python.exe scripts\check_elsevier_api.py 10.1016/j.apenergy.2011.11.048
+
+退出码
+0：至少一种返回内容通过全文检测。
+1：没有取得可验证的完整全文。
+2：配置/输入/运行异常。
+
+连续比较多个 API 的命令：
+.venv\Scripts\python.exe scripts\check_elsevier_api.py --compare-keys
+
+相同 DOI 比较有助于排查差异，但一篇文章不能证明某个 key 可获取全部 Elsevier 全文。

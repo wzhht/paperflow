@@ -24,6 +24,10 @@ class ElsevierNetworkError(ElsevierError):
 class ElsevierHTTPError(ElsevierError):
     """Elsevier returned an HTTP error."""
 
+    def __init__(self, message: str, *, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
 
 class ElsevierContentError(ElsevierError):
     """Elsevier returned unexpected content."""
@@ -35,20 +39,22 @@ class ElsevierClient:
         api_key: str,
         timeout: float = 60.0,
         transport: httpx.BaseTransport | None = None,
+        insttoken: str | None = None,
     ):
         if not api_key:
             raise ValueError("Elsevier API key cannot be empty.")
 
         self.api_key = api_key
 
+        headers = {"X-ELS-APIKey": api_key, "User-Agent": "PaperFlow/0.1.0"}
+        if insttoken:
+            headers["X-ELS-Insttoken"] = insttoken
+
         self.client = httpx.Client(
             timeout=timeout,
             follow_redirects=True,
             transport=transport,
-            headers={
-                "X-ELS-APIKey": api_key,
-                "User-Agent": "PaperFlow/0.1.0",
-            },
+            headers=headers,
         )
 
     def close(self) -> None:
@@ -149,7 +155,8 @@ class ElsevierClient:
                 f"HTTP {response.status_code} "
                 f"for DOI {normalized_doi}. "
                 f"Content-Type: {content_type}. "
-                f"Response: {body_preview}"
+                f"Response: {body_preview}",
+                status_code=response.status_code,
             )
 
         return response
@@ -202,19 +209,20 @@ class ElsevierClient:
         doi: str,
     ) -> bytes:
         """
-        Fetch article PDF using view=FULL.
+        Request FULL first. Some API contexts reject that view; try PDF's default
+        representation only on HTTP 400. The pipeline must validate completeness,
+        because the default representation may be a first-page preview.
 
         Availability depends on the current
         Elsevier entitlement context.
         """
 
-        response = self._request(
-            doi,
-            accept="application/pdf",
-            params={
-                "view": "FULL",
-            },
-        )
+        try:
+            response = self._request(doi, accept="application/pdf", params={"view": "FULL"})
+        except ElsevierHTTPError as exc:
+            if exc.status_code != 400:
+                raise
+            response = self._request(doi, accept="application/pdf")
 
         content = response.content
 

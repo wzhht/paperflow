@@ -65,7 +65,7 @@ def test_fetch_pdf_uses_full_view():
     def handler(request):
         assert request.headers["Accept"] == "application/pdf"
 
-        assert request.url.params["view"] == "FULL"
+        assert request.url.params.get("view") == "FULL"
 
         return httpx.Response(
             200,
@@ -82,6 +82,35 @@ def test_fetch_pdf_uses_full_view():
         pdf = client.fetch_pdf(TEST_DOI)
 
     assert pdf.startswith(b"%PDF-")
+
+
+def test_pdf_default_representation_only_follows_rejected_view():
+    views = []
+
+    def handler(request):
+        views.append(request.url.params.get("view"))
+        if views[-1] == "FULL":
+            return httpx.Response(400, content=b"INVALID_INPUT")
+        return httpx.Response(200, content=b"%PDF-1.7 preview")
+
+    with ElsevierClient("test-key", transport=httpx.MockTransport(handler)) as client:
+        assert client.fetch_pdf(TEST_DOI).startswith(b"%PDF-")
+    assert views == ["FULL", None]
+
+
+def test_pdf_entitlement_rejection_does_not_try_other_views():
+    attempts = []
+
+    def handler(request):
+        attempts.append(request.url.params.get("view"))
+        return httpx.Response(403, content=b"No access")
+
+    with (
+        ElsevierClient("test-key", transport=httpx.MockTransport(handler)) as client,
+        pytest.raises(ElsevierHTTPError),
+    ):
+        client.fetch_pdf(TEST_DOI)
+    assert attempts == ["FULL"]
 
 
 def test_http_error():

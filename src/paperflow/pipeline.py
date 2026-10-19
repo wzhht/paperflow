@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,6 @@ from paperflow.config import (
     Settings,
     load_settings,
     require_elsevier_api_key,
-    require_mineru_executable,
     require_springer_meta_api_key,
     require_springer_oa_api_key,
 )
@@ -30,13 +30,11 @@ from paperflow.parsers.mineru_content import (
     convert_mineru_zip_to_markdown,
     load_mineru_structured_content_from_zip,
 )
-from paperflow.parsers.mineru_pdf import (
-    parse_pdf_with_mineru,
-)
 from paperflow.qa.mineru import (
     audit_mineru_markdown,
 )
 from paperflow.qa.pdf import (
+    extract_elsevier_pdf_expectation,
     validate_pdf_bytes,
 )
 from paperflow.qa.structured import (
@@ -54,6 +52,7 @@ from paperflow.sources.building_simulation_pdf import (
 )
 from paperflow.sources.elsevier import (
     ElsevierClient,
+    ElsevierError,
 )
 from paperflow.sources.nature_pdf import (
     NaturePdfClient,
@@ -90,7 +89,7 @@ class PdfInputRequiredError(PipelineError):
 
 @dataclass(frozen=True)
 class PaperResult:
-    doi: str
+    doi: str | None
     route: str
     source: str
     status: str
@@ -106,6 +105,8 @@ def process_doi(
     pdf_path: str | Path | None = None,
     library_root: str | Path = "workspace/library",
     settings: Settings | None = None,
+    pdf_url: str | None = None,
+    xml_path: str | Path | None = None,
 ) -> PaperResult:
     """
     Process one DOI through PaperFlow V2.
@@ -164,6 +165,9 @@ def process_doi(
     if settings is None:
         settings = load_settings()
 
+    if sum(value is not None for value in (pdf_path, pdf_url, xml_path)) > 1:
+        raise ValueError("Choose only one of --pdf, --pdf-url, or --xml.")
+
     decision = route_doi(doi)
 
     if not decision.supported:
@@ -176,7 +180,25 @@ def process_doi(
 
     paths.ensure()
 
+    if xml_path is not None and decision.route is not Route.ELSEVIER:
+        raise ValueError("--xml currently accepts Elsevier article XML only.")
     if decision.route is Route.ELSEVIER:
+        if pdf_path is not None:
+            return _process_pdf_with_mineru(
+                paths,
+                settings,
+                pdf_content=None,
+                route=Route.ELSEVIER,
+                source="local_pdf_mineru",
+                fallback_used=True,
+                fallback_reason="explicit_pdf_override",
+                source_url=None,
+                source_file=pdf_path,
+            )
+        if xml_path is not None:
+            return _process_elsevier(paths, settings, xml_path=xml_path)
+        if pdf_url is not None:
+            return _process_additional(paths, settings, route=Route.ELSEVIER, pdf_url=pdf_url)
         return _process_elsevier(
             paths,
             settings,
@@ -196,6 +218,11 @@ def process_doi(
             pdf_path=pdf_path,
         )
 
+    if decision.route in {Route.SPRINGER, Route.IEEE, Route.ARXIV, Route.PUBLIC_PDF}:
+        return _process_additional(
+            paths, settings, route=decision.route, pdf_path=pdf_path, pdf_url=pdf_url
+        )
+
     raise UnsupportedRouteError(
         f"PaperFlow V2 route is recognized but not implemented: {decision.route.value}"
     )
@@ -204,6 +231,8 @@ def process_doi(
 def _process_elsevier(
     paths: Any,
     settings: Settings,
+    *,
+    xml_path: str | Path | None = None,
 ) -> PaperResult:
     """
     Elsevier primary structured route.
@@ -215,27 +244,82 @@ def _process_elsevier(
     -> QA
     """
 
-    api_key = require_elsevier_api_key(settings)
+    if xml_path is not None:
+        xml_content = Path(xml_path).read_bytes()
+        from lxml import etree
 
-    with ElsevierClient(
-        api_key=api_key,
-        timeout=settings.http_timeout,
-    ) as client:
-        xml_content = client.fetch_xml(paths.doi)
+        try:
+            root = etree.fromstring(
+                xml_content, etree.XMLParser(resolve_entities=False, no_network=True)
+            )
+        except XMLSyntaxError as exc:
+            raise PipelineContentError("Local Elsevier XML is not parseable.") from exc
+        identifiers = {
+            str(x).strip().lower()
+            for x in root.xpath("//*[local-name()='coredata']/*[local-name()='doi']/text()")
+        }
+        if identifiers != {paths.doi}:
+            raise ValueError("Local Elsevier XML DOI does not match requested paper.")
+    else:
+        api_key = require_elsevier_api_key(settings)
+        with ElsevierClient(api_key=api_key, timeout=settings.http_timeout,
+                            insttoken=settings.elsevier_insttoken) as client:
+            xml_content = client.fetch_xml(paths.doi)
 
     paths.xml.write_bytes(xml_content)
 
     xml_stats = inspect_elsevier_xml(xml_content)
 
     if not xml_stats.is_full_text:
+        pdf_warning = None
+        if xml_path is None:
+            print("Elsevier XML has no full body; trying the official full-text PDF.", flush=True)
+            try:
+                with ElsevierClient(
+                    api_key=require_elsevier_api_key(settings), timeout=settings.http_timeout,
+                    insttoken=settings.elsevier_insttoken,
+                ) as client:
+                    pdf_content = client.fetch_pdf(paths.doi)
+            except ElsevierError as exc:
+                pdf_warning = "elsevier_pdf_unavailable: " + type(exc).__name__
+            else:
+                expectation = extract_elsevier_pdf_expectation(xml_content)
+                validation = validate_pdf_bytes(pdf_content, expectation)
+                _write_json(paths.directory / "acquisition.json", {
+                    "doi": paths.doi,
+                    "source": "elsevier_pdf",
+                    "full_text_available": validation.is_valid,
+                    "bytes": len(pdf_content),
+                    "pages": validation.actual_pages,
+                    "expected_pages": validation.expected_pages,
+                    "xml_full_text_available": False,
+                    "validation": asdict(validation),
+                })
+                if validation.is_valid:
+                    print(
+                        f"Elsevier full-text PDF acquired: {validation.actual_pages} pages; "
+                        "starting MinerU conversion.", flush=True
+                    )
+                    return _process_pdf_with_mineru(
+                        paths, settings, pdf_content=pdf_content, route=Route.ELSEVIER,
+                        source="elsevier_pdf_mineru", fallback_used=True,
+                        fallback_reason="elsevier_xml_not_full_text", source_url=None,
+                        source_file=None,
+                    )
+                pdf_warning = (
+                    f"elsevier_pdf_incomplete_or_unverified: actual_pages={validation.actual_pages}; "
+                    f"expected_pages={validation.expected_pages}"
+                )
+                print(pdf_warning + "; MinerU will not be started.", flush=True)
         qa = {
             "doi": paths.doi,
             "route": (Route.ELSEVIER.value),
             "source": "elsevier_xml",
             "status": "failed",
-            "fallback_used": False,
+            "full_text_available": False,
+            "fallback_used": xml_path is None,
             "structured": (asdict(xml_stats)),
-            "warnings": [],
+            "warnings": [pdf_warning] if pdf_warning else [],
             "failures": [("elsevier_xml_not_full_text")],
         }
 
@@ -245,7 +329,9 @@ def _process_elsevier(
         )
 
         raise PipelineContentError(
-            f"Elsevier XML did not pass the structured full-text check: {xml_stats.reason}"
+            f"Elsevier returned no usable full-text body (metadata/abstract-only response): {xml_stats.reason}. "
+            f"No complete official PDF was verified ({pdf_warning or 'local XML input'}); MinerU has not run. "
+            "Obtain full-text access or supply an authorized --pdf / existing --xml; do not lower QA thresholds."
         )
 
     raw_markdown = convert_elsevier_xml_to_markdown(
@@ -864,15 +950,23 @@ def _process_pdf_with_mineru(
 
         working_pdf = paths.pdf
 
-    executable = require_mineru_executable(settings)
-
     mineru_zip = paths.directory / "mineru.zip"
+    backend = getattr(settings, "mineru_backend", "api")
+    if backend not in {"api", "api-light"}:
+        raise ValueError(
+            "Local MinerU is no longer supported by PaperFlow. "
+            "Set MINERU_BACKEND=api in .env; supported values: api, api-light."
+        )
+    from paperflow.parsers.mineru_api import parse_pdf_with_mineru_api
 
-    parse_result = parse_pdf_with_mineru(
+    parse_result = parse_pdf_with_mineru_api(
         working_pdf,
         mineru_zip,
-        executable=executable,
-        tier=settings.mineru_tier,
+        token=settings.mineru_api_token,
+        model=settings.mineru_api_model,
+        timeout=settings.mineru_api_timeout,
+        lightweight=backend == "api-light",
+        progress=lambda text: print(text, flush=True),
     )
 
     structured = load_mineru_structured_content_from_zip(mineru_zip)
@@ -941,6 +1035,9 @@ def _process_pdf_with_mineru(
 
     if structured.get("is_full_document") is False:
         warnings.append("mineru_not_marked_full_document")
+    warnings.extend(structured.get("warnings", []))
+    if backend != "api-light" and render_stats.page_count != pdf_validation.actual_pages:
+        warnings.append("mineru_page_count_mismatch")
 
     status = _status_from_checks(
         warnings=warnings,
@@ -963,7 +1060,8 @@ def _process_pdf_with_mineru(
             "accepted_input": (pdf_acceptable),
         },
         "mineru": {
-            "tier": (settings.mineru_tier),
+            "backend": backend,
+            "tier": "pipeline-light" if backend == "api-light" else settings.mineru_api_model,
             "zip_file": (mineru_zip.name),
             "structured_file": (structured_path.name),
             "artifact_names": list(parse_result.artifact_names),
@@ -1116,4 +1214,234 @@ def _write_json(
             indent=2,
         ),
         encoding="utf-8",
+    )
+
+
+def _process_additional(paths, settings, *, route, pdf_path=None, pdf_url=None):
+    from dataclasses import replace
+
+    from paperflow.sources.public_pdf import discover_pdf
+
+    local = Path(pdf_path) if pdf_path else find_local_pdf(paths.directory)
+    if local is not None:
+        return _process_pdf_with_mineru(
+            paths,
+            settings,
+            pdf_content=None,
+            route=route,
+            source="local_pdf_mineru",
+            fallback_used=False,
+            fallback_reason=None,
+            source_url=None,
+            source_file=local,
+        )
+    if route is Route.SPRINGER:
+        result, _reason = _try_process_nature_jats(paths, settings)
+        if result is not None:
+            qa = json.loads(paths.qa_json.read_text(encoding="utf-8"))
+            qa["route"] = route.value
+            _write_json(paths.qa_json, qa)
+            return replace(result, route=route.value)
+    native_warnings = []
+    if pdf_url is None and route not in {Route.SPRINGER, Route.IEEE}:
+        if paths.doi.startswith(("10.1002/", "10.1111/")) and settings.wiley_api_key:
+            import httpx
+
+            from paperflow.sources.native import fetch_wiley_pdf
+
+            try:
+                content = fetch_wiley_pdf(paths.doi, settings)
+            except (RuntimeError, ValueError, OSError, httpx.HTTPError) as exc:
+                native_warnings.append("wiley_tdm_unavailable: " + type(exc).__name__)
+            else:
+                return _process_pdf_with_mineru(
+                    paths, settings, pdf_content=content, route=route,
+                    source="wiley_tdm_pdf_mineru", fallback_used=False, fallback_reason=None,
+                    source_url=None, source_file=None,
+                )
+        from paperflow.sources.native import native_candidates
+
+        native_pdf = None
+        for content, kind, native_source, native_url in native_candidates(paths.doi, settings):
+            if kind == "pdf":
+                if native_pdf is None:
+                    native_pdf = (content, native_source, native_url)
+                continue
+            try:
+                return _process_native_document(
+                    paths, content, kind, route=route, source=native_source, source_url=native_url,
+                )
+            except (ValueError, RuntimeError, OSError, XMLSyntaxError, KeyError, TypeError,
+                    zipfile.BadZipFile) as exc:
+                native_warnings.append(native_source + "_rejected: " + type(exc).__name__)
+        if native_pdf is not None:
+            content, native_source, native_url = native_pdf
+            return _process_pdf_with_mineru(
+                paths, settings, pdf_content=content, route=route,
+                source=native_source + "_mineru", fallback_used=True,
+                fallback_reason="native_document_unavailable", source_url=native_url,
+                source_file=None,
+            )
+    metadata, content, source, url, warnings = discover_pdf(
+        paths.doi, settings, explicit_url=pdf_url
+    )
+    warnings = native_warnings + warnings
+    _write_json(paths.directory / "metadata.json", metadata)
+    if content is not None:
+        return _process_pdf_with_mineru(
+            paths,
+            settings,
+            pdf_content=content,
+            route=route,
+            source=source + "_mineru",
+            fallback_used=True,
+            fallback_reason="public_pdf_route",
+            source_url=url,
+            source_file=None,
+        )
+    if route is Route.SPRINGER and settings.springer_meta_api_key:
+        return _process_springer_restricted_partial(
+            paths,
+            settings,
+            route=route,
+            reason="Public full text unavailable",
+            fallback_reason=None,
+        )
+    text = (
+        "# "
+        + metadata["title"]
+        + "\n\n[ABSTRACT ONLY / METADATA ONLY — NOT FULL TEXT]\n\n"
+        + "DOI: "
+        + paths.doi
+        + "\n\nNo authorized full-text PDF was found. "
+        "Supply --pdf or --pdf-url after obtaining access.\n"
+    )
+    if metadata.get("abstract"):
+        text += "\n## Abstract\n\n" + metadata["abstract"] + "\n"
+    paths.llm_md.write_text(text, encoding="utf-8")
+    _write_json(
+        paths.directory / "access.json",
+        {
+            "doi": paths.doi,
+            "full_text_available": False,
+            "access_status": "no_authorized_full_text",
+        },
+    )
+    _write_json(
+        paths.qa_json,
+        {
+            "doi": paths.doi,
+            "route": route.value,
+            "source": "public_metadata_partial",
+            "status": "warning",
+            "full_text_available": False,
+            "warnings": warnings + ["no_authorized_full_text"],
+            "failures": [],
+        },
+    )
+    return PaperResult(
+        paths.doi,
+        route.value,
+        "public_metadata_partial",
+        "warning",
+        None,
+        paths.llm_md,
+        paths.qa_json,
+        True,
+    )
+
+
+def _process_native_document(paths, content, kind, *, route, source, source_url=None, title=None):
+    from paperflow.documents import normalize_document
+
+    normalized = normalize_document(content, kind, doi=paths.doi, title=title)
+    candidate = paths.directory / "native_candidate.xml"
+    candidate.write_bytes(normalized)
+    stats = inspect_jats_xml(candidate)
+    if not stats.candidate_full_text or stats.reference_count == 0:
+        raise PipelineContentError("Native document lacks verified full body or References")
+    target = paths.directory / "native_candidate.md"
+    markdown = convert_jats_xml_to_markdown(candidate, target)
+    audit = audit_jats_table_numeric_values(candidate, markdown)
+    if not audit.values_match:
+        raise PipelineContentError("Native document table numeric audit failed")
+    if any(marker in markdown for marker in ("![", "<img", "data:image", "$$", "\\[")):
+        raise PipelineContentError("Native document contains image/display-math residue")
+    # Publish only after verification, leaving existing successful Markdown intact on rejection.
+    candidate.replace(paths.directory / "jats.xml")
+    target.replace(paths.llm_md)
+    (paths.directory / ("source_native." + kind)).write_bytes(content)
+    etree_title = None
+    from lxml import etree
+
+    tree = etree.fromstring(normalized)
+    title_nodes = tree.xpath('//*[local-name()="article-title"][1]')
+    if title_nodes:
+        etree_title = " ".join("".join(title_nodes[0].itertext()).split())
+    _write_json(paths.directory / "metadata.json", {"doi": stats.doi, "title": etree_title or title,
+                                                  "source": source})
+    _write_json(paths.directory / "access.json", {"doi": stats.doi, "full_text_available": True,
+                                                "access_status": "native_document_verified"})
+    _write_json(paths.qa_json, {
+        "doi": stats.doi, "route": route.value, "source": source, "status": "success",
+        "full_text_available": True, "source_url": source_url, "structured": asdict(stats),
+        "table_numeric_audit": asdict(audit), "warnings": [], "failures": [],
+    })
+    return PaperResult(stats.doi, route.value, source, "success", None, paths.llm_md, paths.qa_json, False)
+
+
+def process_document(input_path, *, doi=None, output_root="workspace/library", title=None):
+    """Local native document import; acquisition and parsing remain separate."""
+    import hashlib
+    from types import SimpleNamespace
+
+    from paperflow.utils.doi import normalize_doi
+
+    input_path = Path(input_path)
+    content = input_path.read_bytes()
+    kind = input_path.suffix.lower().lstrip(".")
+    kind = {"htm": "html", "xhtml": "html", "jats": "xml", "tei": "xml"}.get(kind, kind)
+    doi = normalize_doi(doi) if doi else None
+    if doi:
+        paths = build_paper_paths(doi, output_root)
+        paths.ensure()
+    else:
+        directory = Path(output_root) / ("document_" + hashlib.sha256(content).hexdigest()[:12])
+        directory.mkdir(parents=True, exist_ok=True)
+        paths = SimpleNamespace(doi=None, directory=directory, llm_md=directory / "paper_llm.md",
+                                qa_json=directory / "qa.json")
+    return _process_native_document(paths, content, kind, route=Route.PUBLIC_PDF,
+                                    source="local_native_" + kind, title=title)
+
+
+def process_pdf(pdf_path, *, output_root, title=None, settings=None):
+    """Parse a lawfully obtained PDF with no invented DOI; useful for DOI-unknown references."""
+    import hashlib
+    from types import SimpleNamespace
+
+    from paperflow.storage.flat_export import safe_title
+
+    pdf_path = Path(pdf_path)
+    fingerprint = hashlib.sha256(pdf_path.read_bytes()).hexdigest()[:10]
+    directory = Path(output_root) / (safe_title(title or pdf_path.stem) + " -- " + fingerprint)
+    directory.mkdir(parents=True, exist_ok=True)
+    paths = SimpleNamespace(
+        doi=None,
+        directory=directory,
+        pdf=directory / "paper.pdf",
+        llm_md=directory / "paper_llm.md",
+        qa_json=directory / "qa.json",
+    )
+    if title:
+        _write_json(directory / "metadata.json", {"doi": None, "title": title, "source": "user"})
+    return _process_pdf_with_mineru(
+        paths,
+        settings or load_settings(),
+        pdf_content=None,
+        route=Route.PUBLIC_PDF,
+        source="local_pdf_mineru",
+        fallback_used=False,
+        fallback_reason=None,
+        source_url=None,
+        source_file=pdf_path,
     )

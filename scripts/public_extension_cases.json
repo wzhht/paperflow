@@ -1,0 +1,102 @@
+[
+  {
+    "test_group": "JMLR",
+    "url": "https://jmlr.org/papers/v25/23-0356.html"
+  },
+  {
+    "test_group": "JMLR",
+    "url": "https://jmlr.org/papers/v25/21-1536.html"
+  },
+  {
+    "test_group": "PMLR",
+    "url": "https://proceedings.mlr.press/v202/dettmers23a.html"
+  },
+  {
+    "test_group": "OpenReview",
+    "url": "https://openreview.net/forum?id=i8tGb1ab1j"
+  },
+  {
+    "test_group": "Science Advances",
+    "publisher": "AAAS",
+    "doi": "10.1126/sciadv.abg0947",
+    "title": "The climate and health benefits from intensive building energy efficiency improvements",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "Science Advances",
+    "publisher": "AAAS",
+    "doi": "10.1126/sciadv.adl0335",
+    "title": "Threat of mining to African great apes",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "Copernicus",
+    "publisher": "Copernicus",
+    "doi": "10.5194/gmd-13-4891-2020",
+    "title": "Dynamic Anthropogenic activitieS impacting Heat emissions (DASH v1.0): development and evaluation",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "Copernicus",
+    "publisher": "Copernicus",
+    "doi": "10.5194/gmd-18-1119-2025",
+    "title": "An enhanced emission module for the PALM model system 23.10 with application for PM\n                    <sub>10</sub>\n                    emission from urban domestic heating",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "ASME",
+    "publisher": "ASME",
+    "doi": "10.1115/1.4072593",
+    "title": "Thermal Resistance Effects in Additively Manufactured Polymer Heat Exchangers for Latent Heat Energy Storage",
+    "oa_status": "unknown"
+  },
+  {
+    "test_group": "ASME",
+    "publisher": "ASME",
+    "doi": "10.1115/1.4069386",
+    "title": "Thermal Performance of Triply Periodic Minimal Surface Lattice Structures in Single-Phase Dielectric Fluid Cooling of Power Electronics",
+    "oa_status": "unknown"
+  },
+  {
+    "test_group": "SAGE",
+    "publisher": "SAGE",
+    "doi": "10.1177/01436244211001497",
+    "title": "Research on the design and application of capillary heat exchangers for heat pumps in coastal areas",
+    "oa_status": "unknown"
+  },
+  {
+    "test_group": "IOP",
+    "publisher": "IOP",
+    "doi": "10.1088/2515-7655/ad7404",
+    "title": "Roadmap on established and emerging photovoltaics for sustainable energy conversion",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "AIP",
+    "publisher": "AIP",
+    "doi": "10.1063/5.0204694",
+    "title": "Roadmap on photonic metasurfaces",
+    "oa_status": "hybrid"
+  },
+  {
+    "test_group": "ACM",
+    "publisher": "ACM",
+    "doi": "10.1145/3757892.3757893",
+    "title": "Causal Machine Learning Approaches for Modelling Data Center Heat Recovery: A Physical Testbed Study",
+    "oa_status": "unknown"
+  },
+  {
+    "test_group": "APS",
+    "publisher": "APS",
+    "doi": "10.1103/prxquantum.3.030101",
+    "title": "Is Quantum Advantage the Right Goal for Quantum Machine Learning?",
+    "oa_status": "gold"
+  },
+  {
+    "test_group": "ASCE",
+    "publisher": "ASCE",
+    "doi": "10.1061/(asce)la.1943-4170.0000578",
+    "title": "Liability Factors and Conceptual Framework for Contracts to Manage Design for Digital Fabrication in Construction Projects",
+    "oa_status": "hybrid"
+  }
+]

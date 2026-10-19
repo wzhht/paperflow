@@ -1,0 +1,48 @@
+把一批论文整理成同一个目录
+
+第一次解压：双击“一键安装.cmd”，选择中文或English，按提示安装并配置.env。
+手动安装和排错见README.md；英文说明见README_EN.md。
+源码包没有.venv和.env，不能解压后直接运行。完成Python 3.10、虚拟环境、依赖和配置后再使用下面的步骤。
+
+1. 准备txt清单，每行一个DOI。
+2. 双击“一键批量整理Markdown.cmd”，把txt拖进窗口，按回车。
+3. 输入保存目录，或直接回车使用默认位置。
+
+以后阅读只打开“整理好的Markdown”文件夹。
+每篇文件按论文标题命名，同名会自动区分。100篇都转换成功就会得到100个正文md，不再逐个文件夹找。
+原始PDF/XML和处理记录仍单独放在“原始资料”，无需手动整理。
+
+下不了的文章
+终端会提示对应PDF目录，“原始资料”内也会生成“待补PDF说明.txt”。
+从浏览器取得这篇正文PDF，保留原文件名，放到提示目录，不用改名。
+双击同一目录里的“补好PDF后双击转换.cmd”，不用复制转换命令。
+如果一次补了四五篇或更多PDF：
+保留下载时的原文件名，分别放进对应论文目录，不用改名。
+同一论文目录只放正文PDF；有多个PDF时会提示移出补充材料或重复版本，不会猜选。
+回到本批“原始资料”目录，只双击一次“补齐PDF后批量转换.cmd”。
+程序逐篇转换，缺PDF的跳过，已有正文（包括已生成正文但有警告）的跳过。
+某一篇失败不会中断后面的论文；结果见“补PDF批量结果.csv”。
+下次补齐其他PDF，仍双击同一个批量入口，无需逐篇操作。
+
+旁边的“补PDF转换配置.json”及“批量补PDF转换配置.json”记录转换位置，请保留；不包含密钥。
+如果PDF已经存在、只是API或解析失败，排除故障后直接双击重试，不必重新下载。
+窗口会停留显示结果；正文检查通过后，同一个“整理好的Markdown”目录会补上对应文章。
+转换使用MinerU完整API，会上传PDF并可能消耗额度。移动项目后请重新生成入口。
+只有摘要的文章不会混入默认正文导出。
+
+注意
+PDF默认通过MinerU完整API转换，会上传PDF、可能消耗账户额度；不启动本地MinerU或GPU。
+在.env中填写MINERU_API_TOKEN（兼容MINERU_API），并设置MINERU_BACKEND=api。
+API失败不会自动改用本地或轻量模式；XML全文转换不需要MinerU。
+已经有转换好的结果，只需使用export-markdown集中导出，无需重新下载或解析。
+现有获取路线保持不变；Semantic Scholar和OSTI已撤回。
+
+English quick guide
+1. Run 一键安装.cmd and select 2 English. Python 3.10 is required.
+2. Edit .env with your own API credentials. Existing credentials and papers are preserved.
+3. Run 一键批量整理Markdown.cmd, provide a DOI text file and choose an output folder.
+4. Read title-named articles in 整理好的Markdown; source files stay in 原始资料.
+5. For missing PDFs, keep each original filename in its matching paper folder, then run
+   补齐PDF后批量转换.cmd once from the batch's 原始资料 folder.
+   Completed/missing items are skipped; full MinerU API uploads may consume credits.
+Change language by rerunning the installer or using --language en / --language zh.

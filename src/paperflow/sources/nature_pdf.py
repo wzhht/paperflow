@@ -32,6 +32,28 @@ class NaturePdfHTTPError(NaturePdfError):
 class NaturePdfContentError(NaturePdfError):
     """Nature did not return a usable article PDF."""
 
+    def __init__(self, message: str, *, reason: str = "unknown", http_status: int | None = None):
+        super().__init__(message)
+        self.reason = reason
+        self.http_status = http_status
+
+
+def classify_nature_non_pdf(response: httpx.Response) -> str:
+    host = urlparse(str(response.url)).hostname or ""
+    text = response.text[:1_000_000].lower()
+    if any(marker in text for marker in (
+        "verify you are human", "checking your browser", "captcha challenge"
+    )):
+        return "user_verification_required"
+    if host == "idp.nature.com":
+        return "institution_login_required"
+    if any(marker in text for marker in (
+        "buy this article", "purchase this article", "access through your institution",
+        "access via your institution",
+    )):
+        return "access_restricted"
+    return "non_pdf_response"
+
 
 @dataclass(frozen=True)
 class NaturePdfPayload:
@@ -334,6 +356,12 @@ class NaturePdfClient:
             stage="article_page",
         )
 
+        if classify_nature_non_pdf(page_response) == "user_verification_required":
+            raise NaturePdfContentError(
+                "Nature article page requires user verification in the browser.",
+                reason="user_verification_required", http_status=page_response.status_code,
+            )
+
         href = _find_main_pdf_href(
             page_response.text,
             normalized,
@@ -371,12 +399,12 @@ class NaturePdfClient:
                 "PDF URL did not return "
                 "a PDF for DOI "
                 f"{normalized}. "
-                f"URL: "
-                f"{pdf_response.url}. "
                 f"HTTP status: "
                 f"{pdf_response.status_code}. "
                 f"Content-Type: "
-                f"{content_type or 'unknown'}."
+                f"{content_type or 'unknown'}.",
+                reason=classify_nature_non_pdf(pdf_response),
+                http_status=pdf_response.status_code,
             )
 
         return NaturePdfPayload(

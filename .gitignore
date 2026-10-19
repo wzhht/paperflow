@@ -13,16 +13,28 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Secrets
 .env
 .env.*
+.paperflow-language
 
 # PaperFlow data workspace
 workspace/
 
 # Smoke / benchmark files
 _smoke_test/
+
+# Distribution artifacts and optional model/download caches
+build/
+dist/
+.cache/
+models/
+*.whl
+*.zip
 
 # Logs
 *.log
@@ -33,5 +45,5 @@ _smoke_test/
 
 # OS
 Thumbs.db
-.DS_Store!.env.example
+.DS_Store
 !.env.example

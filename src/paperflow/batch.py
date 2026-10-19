@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from paperflow.config import ConfigError
+from paperflow.config import ConfigError, Settings, redact_error
 from paperflow.parsers.mineru_pdf import MinerUError
 from paperflow.pipeline import (
     PaperResult,
@@ -161,7 +161,7 @@ def _item_from_error(
         fallback_used=False,
         llm_markdown="",
         qa="",
-        error=(f"{type(exc).__name__}: {exc}"),
+        error=redact_error(f"{type(exc).__name__}: {exc}"),
     )
 
 
@@ -215,6 +215,7 @@ def run_batch(
     library_root: str | Path,
     results_path: str | Path | None = None,
     on_result: BatchResultCallback | None = None,
+    settings: Settings | None = None,
 ) -> BatchRunResult:
     """
     Process all DOI values in one text file.
@@ -251,10 +252,8 @@ def run_batch(
         start=1,
     ):
         try:
-            result = process_doi(
-                doi,
-                library_root=library_root,
-            )
+            kwargs = {"settings": settings} if settings is not None else {}
+            result = process_doi(doi, library_root=library_root, **kwargs)
 
             item = _item_from_paper_result(
                 index,

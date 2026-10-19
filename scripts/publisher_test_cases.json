@@ -1,0 +1,121 @@
+[
+  {
+    "publisher": "Elsevier",
+    "doi": "10.1016/j.apenergy.2011.11.048",
+    "title": "Impact of climate change on building energy use in different climate zones and mitigation and adaptation implications",
+    "oa_status": "closed",
+    "year": 2011,
+    "journal": "Applied Energy",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Elsevier",
+    "doi": "10.1016/j.apenergy.2017.12.066",
+    "title": "A methodology for performance robustness assessment of low-energy buildings using scenario analysis",
+    "oa_status": "hybrid",
+    "year": 2017,
+    "journal": "Applied Energy",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Building Simulation",
+    "doi": "10.1007/s12273-016-0346-8",
+    "title": "Effectiveness of passive measures against climate change: Case studies in Central Italy",
+    "oa_status": "closed",
+    "year": 2017,
+    "journal": "Building Simulation",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Nature",
+    "doi": "10.1038/ncomms14916",
+    "title": "Energy efficiency to reduce residential electricity and natural gas use under climate change",
+    "oa_status": "gold",
+    "year": 2017,
+    "journal": "Nature Communications",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Nature",
+    "doi": "10.1038/nclimate2841",
+    "title": "Roadmap towards justice in urban climate adaptation research",
+    "oa_status": "closed",
+    "year": 2016,
+    "journal": "Nature Climate Change",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Springer",
+    "doi": "10.1007/s11263-024-02273-7",
+    "title": "Day2Dark: Pseudo-Supervised Activity Recognition Beyond Silent Daylight",
+    "oa_status": "hybrid",
+    "year": 2024,
+    "journal": "International Journal of Computer Vision",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "IEEE",
+    "doi": "10.1109/access.2021.3085708",
+    "title": "Making Sense of Neuromorphic Event Data for Human Action Recognition",
+    "oa_status": "gold",
+    "year": 2021,
+    "journal": "IEEE Access",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "IEEE",
+    "doi": "10.1109/tpami.2020.3008413",
+    "title": "Event-Based Vision: A Survey",
+    "oa_status": "hybrid",
+    "year": 2020,
+    "journal": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "IEEE",
+    "doi": "10.1109/tpami.2022.3152247",
+    "title": "A Survey on Vision Transformer",
+    "oa_status": "green",
+    "year": 2022,
+    "journal": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "Nature",
+    "doi": "10.1038/s41467-026-74289-1",
+    "title": "Warming-driven shifts in global building energy use reshape climate mitigation planning",
+    "oa_status": "gold",
+    "year": 2026,
+    "journal": "Nature Communications",
+    "metadata_source": "OpenAlex",
+    "classification_checked_at": "2026-10-15",
+    "note": "近期文章样本；XML/PDF可用性由实测决定，不预设一定只有PDF"
+  },
+  {
+    "publisher": "Wiley",
+    "doi": "10.1002/(sici)1097-0088(199910)19:12<1375::aid-joc427>3.0.co;2-0",
+    "title": "Canadian historical and homogeneous temperature datasets for climate change analyses",
+    "journal": "International Journal of Climatology",
+    "oa_status": "unknown",
+    "metadata_source": "Crossref (OA not verified)",
+    "classification_checked_at": "2026-10-15"
+  },
+  {
+    "publisher": "PLOS",
+    "doi": "10.1371/journal.pmed.0020124",
+    "title": "Why Most Published Research Findings Are False",
+    "journal": "PLOS Medicine",
+    "oa_status": "gold",
+    "metadata_source": "Publisher JATS (actual full text tested)",
+    "classification_checked_at": "2026-10-15"
+  }
+]
