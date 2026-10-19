@@ -1,0 +1,9 @@
+中文
+1. 运行 Install.cmd，选择语言，安装后在.env填写自己的API。
+2. 运行 Batch_Markdown.cmd，拖入每行一个DOI的TXT，选择保存位置。
+3. 缺全文时，把正文PDF保留原名放入对应论文目录，再运行 Retry_PDF_Batch.cmd。
+
+English
+1. Run Install.cmd, choose a language, then configure your API credentials in .env.
+2. Run Batch_Markdown.cmd, provide a one-DOI-per-line TXT file and choose an output folder.
+3. Add matching main PDFs to their article folders without renaming, then run Retry_PDF_Batch.cmd.

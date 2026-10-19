@@ -1,18 +1,14 @@
 # PaperFlow
 
-[中文](README.md) | **English**
+[中文](README.md) | English
 
-Turn a DOI list into full-text Markdown. Each batch has one reading folder, with files named after article titles and image binaries omitted.
+Fetch papers from a DOI list and convert them to Markdown. Reading files are collected in one folder, named after article titles, without images.
 
-## 1. Install
+## Installation
 
-Extract the complete project, run **[Install.cmd](Install.cmd)**, choose Chinese or English, and follow the prompts.
+Windows, Python 3.10 ([download](https://www.python.org/downloads/release/python-31011/)).
 
-Requires Python 3.10. If it is missing, the launcher provides the [download link](https://www.python.org/downloads/release/python-31011/); install Python and run `Install.cmd` again. Installation needs network access and preserves existing settings and papers.
-
-## 2. Configure your APIs
-
-Open the project's `.env` in Notepad and enter your own values:
+Run [Install.cmd](Install.cmd) and choose a language. Then edit `.env` with your API credentials:
 
 ```ini
 ELSEVIER_API_KEY=your_elsevier_key
@@ -20,34 +16,18 @@ MINERU_BACKEND=api
 MINERU_API_TOKEN=your_mineru_token
 ```
 
-Configure only what you need: Elsevier API retrieves entitled full-text XML; PDF conversion requires MinerU API, also accepting the existing `MINERU_API` alias. No local GPU is needed. PDFs are uploaded and may consume credits. Other API settings are optional; see comments in `.env.example`.
+Elsevier full-text XML requires entitlement. PDFs use MinerU API, may consume credits and need no local GPU. Other settings are optional; see `.env.example`. Keep `.env` private.
 
-## 3. Process a batch
+## Usage
 
-1. Prepare a TXT file with one DOI per line.
-2. Run **[Batch_Markdown.cmd](Batch_Markdown.cmd)**, drag the list into the window and press Enter.
-3. Choose an output folder and wait for individual results.
+Create a TXT file with one DOI per line. Run [Batch_Markdown.cmd](Batch_Markdown.cmd), drag in the TXT and choose an output folder.
 
-```text
-Batch/
-├─ 整理好的Markdown/   Title-named reading files
-└─ 原始资料/           PDFs, XML and processing records
-```
+Reading files are in 整理好的Markdown. PDFs, XML and processing records are in 原始资料.
 
-Implemented acquisition routes cover Elsevier, Springer Nature and other publishers/platforms. Automatic full-text availability depends on the article and access rights; missing full text can be supplied as a PDF.
+## Missing PDFs
 
-## 4. Add several missing PDFs at once
+Place each matching main PDF in the article folder indicated by the window. Keep its original filename and one main PDF per article folder.
 
-1. Find each article's folder from the terminal or `原始资料/待补PDF说明.txt`.
-2. Place the matching main PDF there, **keeping its original filename**. Keep one main PDF per article folder.
-3. Return to the batch's `原始资料` folder and run **`Retry_PDF_Batch.cmd`** once.
+Run `Retry_PDF_Batch.cmd` in 原始资料 to convert all ready PDFs. Use `Retry_PDF.cmd` inside an article folder to retry just that paper.
 
-Markdown goes into the original reading folder. Missing PDFs and already converted full-text items are skipped; individual failures do not stop later papers. Read the window and `补PDF批量结果.csv` for results.
-
-To retry one paper, use `Retry_PDF.cmd` inside its folder. If the PDF already exists and only parsing failed, fix the reported issue and retry without downloading again.
-
-## Notes
-
-- Review per-paper results: abstracts are not full text, and warnings require checking the original.
-- Keep `.env` private. Source archives exclude your environment and papers.
-- Rerun `Install.cmd` to change language. Papers are not translated; third-party logs retain their original language.
+Markdown goes to the original reading folder. Completed and missing-PDF items are skipped; results appear in the window and 补PDF批量结果.csv. Abstracts are not full text; review warnings against the original.
