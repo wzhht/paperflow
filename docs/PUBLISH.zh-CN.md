@@ -4,15 +4,25 @@
 
 ## 发布目标
 
-- GitHub仓库继续使用：<https://github.com/wzhht/paperflow-v2>。
+- GitHub仓库名统一为 `paperflow`：<https://github.com/wzhht/paperflow>。
 - 产品名称：PaperFlow V3。
 - Python包版本：`0.3.0`，与当前代码一致。
 - GitHub发布标签：`v3.0.0`，沿用历史 `v2.0.0` 的产品版本命名。
 - Release标题：`PaperFlow V3`。
 
-Git标签是产品发布标记，Python包版本是安装元数据；本项目V2也采用不同的两套编号。这里明确记录对应关系，不覆盖旧标签，也不需要改GitHub仓库名。
+Git标签是产品发布标记，Python包版本是安装元数据；本项目V2也采用不同的两套编号。这里明确记录对应关系，不覆盖旧标签；首页和仓库名称统一使用PaperFlow，版本号保留在发布记录中。
 
 2026-10-19只读核对：远端 `main` 与本机基线均为 `fe85eb0`。本机有指向V2冻结基线的 `v2.0.0`，远端当时还没有标签；这是发布前快照，实际推送前仍应重新读取远端。
+
+## 先将GitHub仓库改名为paperflow
+
+在GitHub原仓库中打开 Settings → General，在 Repository name 中输入 `paperflow`，点击 Rename。不要删除原仓库或另建空仓库。改名会保留提交、标签和其他仓库记录，原地址会重定向。
+
+改名后更新本地远端地址（不要求更改本地文件夹名）：
+
+```bat
+git -C D:\paper\paperflow-v2 -c safe.directory=D:/paper/paperflow-v2 remote set-url origin https://github.com/wzhht/paperflow.git
+```
 
 ## 1. 从哪个目录上传
 
@@ -39,7 +49,7 @@ git -c safe.directory=D:/paper/paperflow-v2 tag --list
 git -c safe.directory=D:/paper/paperflow-v2 ls-files .env .venv workspace .paperflow-language
 ```
 
-最后一条应没有输出。确认origin为 `https://github.com/wzhht/paperflow-v2.git`，旧 `v2.0.0` 标签仍存在。
+最后一条应没有输出。确认origin为 `https://github.com/wzhht/paperflow.git`，旧 `v2.0.0` 标签仍存在。
 若缺pytest/Ruff，只在该项目环境安装开发依赖：`.venv\Scripts\python.exe -m pip install -e ".[dev]"`。
 
 命令中的 `-c safe.directory=...` 仅作用于这一次Git调用，处理该工作目录的所有权检查，不修改全局Git配置。
@@ -84,7 +94,7 @@ git -c safe.directory=D:/paper/paperflow-v2 push origin v2.0.0
 
 ## 4. 在GitHub创建V3 Release
 
-代码推送成功后，打开 [新建Release页面](https://github.com/wzhht/paperflow-v2/releases/new)：
+代码推送成功后，打开 [新建Release页面](https://github.com/wzhht/paperflow/releases/new)：
 
 1. Choose a tag：输入 `v3.0.0` 并创建新标签。
 2. Target：选择包含V3提交的 `main`，核对提交确实是本次更新。

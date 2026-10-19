@@ -1,10 +1,10 @@
-# PaperFlow V3
+# PaperFlow
 
 [中文](README.md) | **English**
 
-Local academic full-text acquisition and Markdown conversion. V3 is package version **0.3.0**. Existing checkouts named `paperflow-v2` can keep their paths.
+Local academic full-text acquisition and Markdown conversion.
 
-V3 preserves the V2 core renderers and QA while adding public-source discovery, native XML/HTML/EPUB/TEI imports, MinerU API parsing and title-named flat reading copies. Publisher recognition does not guarantee subscription access.
+Supports public-source discovery, native XML/HTML/EPUB/TEI imports, MinerU API parsing, conservative scientific-content checks and title-named reading copies. Publisher recognition does not guarantee subscription access.
 
 ## Documentation
 
@@ -14,7 +14,6 @@ V3 preserves the V2 core renderers and QA while adding public-source discovery, 
 | Process a DOI batch | [Detailed user guide](docs/USAGE.en.md) |
 | Add several downloaded PDFs and recover them in one run | [PDF recovery and file locations](docs/USAGE.en.md) |
 | Understand warnings, repeat runs and errors | [Status and troubleshooting](docs/USAGE.en.md) |
-| Publish V3 in the existing GitHub repository | [Publishing guide](docs/PUBLISH.en.md) |
 
 ## Quick start
 
@@ -108,25 +107,15 @@ Reading and source folders must be separate and non-nested. `--include-partial` 
 
 ## Scope and verification
 
-See [docs/VALIDATION.md](docs/VALIDATION.en.md) for historical representative-paper acceptance and unresolved samples. Routes include Elsevier, Springer/Nature, Building Simulation, IEEE/CVF/arXiv, Wiley, PLOS, Frontiers, eLife, Europe PMC, Copernicus, MDPI resources, JMLR and PMLR. ACS/SAGE/ASME/OpenReview still have blocked or incompletely verified samples. Semantic Scholar/OSTI experimental fallbacks were removed.
+See [Validation scope](docs/VALIDATION.en.md) for historical representative-paper acceptance and unresolved samples. Routes include Elsevier, Springer/Nature, Building Simulation, IEEE/CVF/arXiv, Wiley, PLOS, Frontiers, eLife, Europe PMC, Copernicus, MDPI resources, JMLR and PMLR.
 
 Acquisition, article identity, completeness and Markdown conversion are separate stages. Accepted manuscripts/preprints are not silently treated as published versions. Preserve body text, references and reliable structured tables; omit image binaries and standalone display equations. OCR and scientific notation may require human review.
 
 Only use authorized/public content. No paywall, browser-challenge or TLS-verification bypass.
 
-## Tests and backup
+## Development tests
 
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 .venv\Scripts\python.exe -m ruff check src tests scripts
 ```
-
-The two diagnostic CMD launchers have been removed. The root now has installation and batch Markdown entry points; developer diagnostic scripts remain under `scripts/`. PDF acquisition tests do not automatically call MinerU. Source, tests, reusable scripts/sample lists, documentation and `.env.example` belong in Git. Credentials, virtual environments, `workspace`, models and caches do not. A source backup is not a paper-library backup.
-
-Local reviewed PDF fingerprints in `workspace/pdf_verifications.json` are not automatically inherited by a fresh clone. ResearchFlow and its indexes remain independent. See [CHANGELOG.md](CHANGELOG.md).
-
-## Publishing V3
-
-Keep repository `wzhht/paperflow-v2`, create release title `PaperFlow V3` and product tag `v3.0.0`; the Python package remains `0.3.0`, matching the existing separate product/package numbering. Preserve the old `v2.0.0` tag.
-
-The Git checkout is `D:\paper\paperflow-v2`; `paperflow-v3` is a user installation, not the upload source. Follow the [publishing guide](docs/PUBLISH.en.md) and use the prepared [bilingual release notes](docs/RELEASE_NOTES_V3.md).

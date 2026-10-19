@@ -1,10 +1,10 @@
-# PaperFlow V3
+# PaperFlow
 
 **中文** | [English](README_EN.md)
 
 本地学术论文获取与 Markdown 转换工具：输入 DOI 或已有论文文件，优先使用结构化全文；需要解析 PDF 时调用 MinerU API，不启动本地 MinerU 或 GPU 模型。
 
-V3 的 Python 包版本为 **0.3.0**。已有项目目录仍可叫 `paperflow-v2`，无需移动或改名。保留 V2 主要转换与 QA，增加公开全文入口、原生文档导入、MinerU API 和标题命名的集中导出。
+支持公开全文获取、原生XML/HTML/EPUB/TEI导入、MinerU API解析，以及按论文标题集中保存Markdown。
 
 **第一次解压源码包，请先完成下面的安装步骤，再双击一键入口。** 源码ZIP不是免安装软件，不含 `.venv`、`.env` 或MinerU。
 
@@ -14,9 +14,8 @@ V3 的 Python 包版本为 **0.3.0**。已有项目目录仍可叫 `paperflow-v2
 | 批量输入DOI并整理MD | 下方“日常使用” |
 | 自己下载了四五篇PDF，想一次转完 | [操作手册：补PDF完整步骤](docs/USAGE.zh-CN.md) |
 | 看懂文件位置、warning、重复运行和常见错误 | [详细操作手册](docs/USAGE.zh-CN.md) |
-| 上传到现有GitHub仓库并发布V3 | [GitHub发布指南](docs/PUBLISH.zh-CN.md) |
 
-英文对应文档：[README](README_EN.md)、[User guide](docs/USAGE.en.md)、[Publishing](docs/PUBLISH.en.md)。
+英文对应文档：[README](README_EN.md)、[User guide](docs/USAGE.en.md)。
 
 
 ## 首次解压安装（Windows）
@@ -193,15 +192,11 @@ PaperFlow不再调用本地MinerU，环境不必装GPU PyTorch。API转换可能
 
 已有Elsevier、Springer/Nature、Building Simulation、IEEE/CVF/arXiv、Wiley、PLOS、Frontiers、eLife、Europe PMC、Copernicus、MDPI资源文件、JMLR/PMLR等路线。**识别DOI不代表该出版社全部期刊都能下载**。代表样本及未解决项目见 [验收范围](docs/VALIDATION.md)。
 
-ACS、SAGE、ASME、OpenReview仍有受阻或待独立核验的样本。Semantic Scholar/OSTI实验路线已撤回。
-
 正文、References和可靠的结构化表格数值尽量保留；不输出图片本体，独立展示公式可移除，行内科学量尽量保留。不会伪造图片表格。OCR、公式、复杂排版仍可能有错，重要内容需回看原文。
 
 获取文件、论文身份、完整性、Markdown转换是不同阶段。作者稿/预印本不冒充出版版，摘要不冒充全文。只用公开或已有授权的来源，不绕过付费墙、网站挑战或TLS验证。
 
 ## 检测与开发
-
-旧的两个检测CMD入口已移除。开发检测脚本保留，日常用户只需安装和批量整理两个入口。
 
 - `scripts/check_elsevier_api.py`：比较自己的API，不必反复修改 `.env`，见 [检测说明](scripts/Elsevier_API检测说明.txt)。
 
@@ -211,18 +206,4 @@ ACS、SAGE、ASME、OpenReview仍有受阻或待独立核验的样本。Semantic
 .venv\Scripts\python.exe scripts\check_public_extensions.py --group PMLR
 ```
 
-报告写入新的 `workspace` 子目录。获取通过不等于Markdown或GPU也已验收。失败、待核验、完整性通过分别记录。
-
-## 文件和备份
-
-源码仓库保留 `src/`、`tests/`、可重复运行的 `scripts/` 与样本清单、安装和批量整理两个一键入口、README、[CHANGELOG](CHANGELOG.md)、验收说明和 `.env.example`。
-
-`.env`、`.venv`、`workspace/`、缓存、模型和构建产物不提交Git。代码备份不包含文献或凭据，迁移时应另行复制本机数据。
-人工核验指纹在本机 `workspace/pdf_verifications.json`，不随源码发布；新机器不会自动继承本机核验结论。
-ResearchFlow的文献库、检索逻辑、期刊白名单及外部环境均独立保留。
-
-## 发布V3到GitHub
-
-保留现有仓库地址 `wzhht/paperflow-v2`，以 `PaperFlow V3` 为Release标题，新增产品标签 `v3.0.0`，Python包继续为 `0.3.0`。旧 `v2.0.0` 标签保留。
-
-当前有Git历史的源码工作目录是 `D:\paper\paperflow-v2`；`paperflow-v3` 是安装使用副本。发布应从Git工作目录提交经过检查的源码，不上传本机环境和论文。详细命令和网页步骤见 [发布指南](docs/PUBLISH.zh-CN.md)，发布正文已准备为 [中英文Release说明](docs/RELEASE_NOTES_V3.md)。
+检测报告保存在 `workspace` 中；具体使用方法见 [操作手册](docs/USAGE.zh-CN.md)。

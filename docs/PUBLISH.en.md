@@ -4,9 +4,17 @@
 
 ## Naming
 
-Keep the repository at <https://github.com/wzhht/paperflow-v2>. Use product/release title **PaperFlow V3**, Git tag **`v3.0.0`**, and the existing Python package version **`0.3.0`**. This continues the historical product-tag naming (`v2.0.0`), which is separate from package metadata. Preserve the old tag; renaming the repository is unnecessary.
+Use repository name `paperflow` at <https://github.com/wzhht/paperflow>. Use product/release title **PaperFlow V3**, Git tag **`v3.0.0`**, and the existing Python package version **`0.3.0`**. This continues the historical product-tag naming (`v2.0.0`), which is separate from package metadata. Preserve the old tag; the homepage and repository name use PaperFlow, while versions remain in release history.
 
 Read-only check on 2026-10-19: remote `main` and the local baseline both pointed to `fe85eb0`. The local `v2.0.0` frozen-baseline tag had not yet been pushed; no remote tags were listed. Recheck before publishing.
+
+## Rename the GitHub repository first
+
+In the existing repository, open Settings → General, enter `paperflow` in Repository name and click Rename. Keep the existing repository/history rather than deleting it or creating an empty replacement. GitHub redirects the old URL. Then update the local remote without renaming the local folder:
+
+```bat
+git -C D:\paper\paperflow-v2 -c safe.directory=D:/paper/paperflow-v2 remote set-url origin https://github.com/wzhht/paperflow.git
+```
 
 ## Working directory and publishable files
 
@@ -67,7 +75,7 @@ Use Git's credential manager/browser authentication. Never embed tokens in remot
 
 ## Create the GitHub release
 
-After the push succeeds, open [New release](https://github.com/wzhht/paperflow-v2/releases/new):
+After the push succeeds, open [New release](https://github.com/wzhht/paperflow/releases/new):
 
 1. Create tag `v3.0.0`, targeting the `main` commit containing V3.
 2. Optionally choose previous tag `v2.0.0`.
