@@ -4,6 +4,18 @@
 
 按DOI批量获取论文，转换为Markdown。文件按论文标题集中保存，不含图片。
 
+## 文献来源
+
+| 来源 | 期刊或平台举例 |
+|---|---|
+| Elsevier | Applied Energy、Energy and Buildings、Building and Environment、Journal of Building Engineering |
+| Springer Nature | Building Simulation、Nature Communications、International Journal of Computer Vision，以及其他已有OA获取路线 |
+| IEEE | IEEE Access、TPAMI、CVPR会议论文 |
+| 其他出版社 | Wiley、Taylor & Francis、MDPI、PLOS、Frontiers、eLife、AAAS、Copernicus、ACM、IOP、AIP、APS、ASCE |
+| 论文平台 | arXiv、JMLR、PMLR |
+
+全文获取取决于文章开放状态和已有权限，获取失败可自行补PDF。
+
 ## 安装
 
 Windows，Python 3.10（[下载](https://www.python.org/downloads/release/python-31011/)）。
@@ -18,9 +30,36 @@ MINERU_API_TOKEN=你的MinerU token
 
 Elsevier全文XML需要相应权限；PDF由MinerU API解析，无需本地GPU，可能消耗额度。其他配置按 `.env.example` 选填。请勿公开 `.env`。
 
+<details>
+<summary>手动安装（CMD）</summary>
+
+在项目文件夹的资源管理器地址栏输入 `cmd` 并回车，再逐行执行。已有可用的 `.venv` 时跳过第一行。
+
+```bat
+py -3.10 -m venv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\python.exe -m pip install -e .
+if not exist .env copy .env.example .env
+echo zh>.paperflow-language
+.venv\Scripts\paperflow.exe version
+notepad .env
+```
+
+填写自己的API后保存 `.env`，再运行 `Batch_Markdown.cmd`。使用英文可将 `echo zh` 改为 `echo en`。
+
+</details>
+
 ## 使用
 
-准备一个TXT，每行一个DOI。双击 [Batch_Markdown.cmd](Batch_Markdown.cmd)，拖入TXT，选择保存位置。
+准备一个TXT，每行一个DOI，不加标题或编号。例如 [example_dois.txt](example_dois.txt)：
+
+```text
+10.1016/j.jobe.2024.110286
+10.1007/s12273-025-1335-6
+10.1016/j.buildenv.2025.114072
+```
+
+双击 [Batch_Markdown.cmd](Batch_Markdown.cmd)，拖入TXT，选择保存位置。示例可直接试用，是否取得全文取决于你的权限和网络。
 
 结果在“整理好的Markdown”；PDF、XML和处理记录在“原始资料”。
 
