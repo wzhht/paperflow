@@ -13,9 +13,9 @@ from paperflow.language import t
 from paperflow.recovery import MultipleLocalPdfError, find_local_pdf
 from paperflow.storage import build_paper_paths
 
-LAUNCHER_NAME = "补好PDF后双击转换.cmd"
+LAUNCHER_NAME = "Retry_PDF.cmd"
 CONFIG_NAME = "补PDF转换配置.json"
-BATCH_LAUNCHER_NAME = "补齐PDF后批量转换.cmd"
+BATCH_LAUNCHER_NAME = "Retry_PDF_Batch.cmd"
 BATCH_CONFIG_NAME = "批量补PDF转换配置.json"
 
 

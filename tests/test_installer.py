@@ -120,7 +120,7 @@ def test_english_batch_and_recovery_prompts(tmp_path, monkeypatch, capsys):
 
 @pytest.mark.skipif(os.name != 'nt', reason='Windows installer bootstrap')
 def test_real_installer_cmd_check_and_help_never_install():
-    launcher = ROOT / '一键安装.cmd'
+    launcher = ROOT / 'Install.cmd'
     assert b'\n' not in launcher.read_bytes().replace(b'\r\n', b'')
     for args, expected in [(['--help'], '--language'),
                            (['--language', 'en', '--check'], 'Checks passed')]:

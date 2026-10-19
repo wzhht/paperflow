@@ -46,12 +46,12 @@ def install(root, language, *, check_only=False):
         (root / ".paperflow-language").write_text(language + "\n", encoding="utf-8")
         say("[4/4] 安装完成。已有.env及文献保留，不安装本地MinerU或GPU模型。",
             "[4/4] Installed. Existing .env and papers are preserved. No local MinerU/GPU models installed.")
-        say("下一步：用记事本打开.env，填写自己的API，然后双击一键批量整理Markdown.cmd。",
-            "Next: edit .env in Notepad with your own API credentials, then run 一键批量整理Markdown.cmd.")
+        say("下一步：用记事本打开.env，填写自己的API，然后双击Batch_Markdown.cmd。",
+            "Next: edit .env in Notepad with your own API credentials, then run Batch_Markdown.cmd.")
         say("PDF默认上传MinerU API转换，可能消耗额度。不要公开.env。",
             "PDFs use the MinerU API and may consume credits. Keep .env private.")
-        say("切换语言：重新运行一键安装.cmd并选择语言；也可用--language zh/en运行批量入口。",
-            "To change language, rerun 一键安装.cmd or pass --language zh/en to the batch launcher.")
+        say("切换语言：重新运行Install.cmd并选择语言；也可用--language zh/en运行批量入口。",
+            "To change language, rerun Install.cmd or pass --language zh/en to the batch launcher.")
         return 0
     except (OSError, ValueError, subprocess.CalledProcessError):
         say("安装未完成。请检查Python 3.10、网络或上方安装错误。已有配置和资料没有删除；"

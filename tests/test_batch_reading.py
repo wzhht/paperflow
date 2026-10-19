@@ -67,10 +67,10 @@ def test_failed_paper_has_pdf_folder_and_resume_command_in_terminal_and_file(tmp
     assert str(pdf.parent) in result.output and str(pdf.parent) in notes
     assert '保留原文件名' in notes and '重命名' not in notes
     assert '--pdf' in notes and '--markdown-dir' in notes
-    assert (pdf.parent / '补好PDF后双击转换.cmd').is_file()
-    assert '补好PDF后双击转换.cmd' in notes and '补好PDF后双击转换.cmd' in result.output
-    assert (library / '补齐PDF后批量转换.cmd').is_file()
-    assert '补齐PDF后批量转换.cmd' in notes
+    assert (pdf.parent / 'Retry_PDF.cmd').is_file()
+    assert 'Retry_PDF.cmd' in notes and 'Retry_PDF.cmd' in result.output
+    assert (library / 'Retry_PDF_Batch.cmd').is_file()
+    assert 'Retry_PDF_Batch.cmd' in notes
     assert not list(reading.glob('*.md'))
 
 
@@ -131,7 +131,7 @@ def test_friendly_script_only_delegates_to_existing_cli(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(os.name != 'nt', reason='Windows launcher')
 def test_real_windows_launcher_help_does_not_start_downloads():
-    launcher = ROOT / '一键批量整理Markdown.cmd'
+    launcher = ROOT / 'Batch_Markdown.cmd'
     content = launcher.read_bytes()
     assert b'\n' not in content.replace(b'\r\n', b'')
     result = subprocess.run(['cmd.exe', '/d', '/c', 'call', str(launcher), '--help'],
@@ -144,12 +144,12 @@ def test_real_windows_launcher_help_does_not_start_downloads():
 @pytest.mark.skipif(os.name != 'nt', reason='Windows first-extraction guidance')
 def test_fresh_extraction_launcher_shows_install_steps_without_creating_environment(tmp_path):
     launcher = tmp_path / 'start.cmd'
-    launcher.write_bytes((ROOT / '一键批量整理Markdown.cmd').read_bytes())
+    launcher.write_bytes((ROOT / 'Batch_Markdown.cmd').read_bytes())
     result = subprocess.run(['cmd.exe', '/d', '/c', 'call', str(launcher)], input=b'\n',
                             capture_output=True, timeout=10, check=False)
     output = (result.stdout + result.stderr).decode('utf-8', errors='replace')
     assert result.returncode == 2, output
-    assert 'py -3.10 -m venv .venv' in output and 'pip install -e .' in output
+    assert 'Install.cmd' in output
     assert 'README.md' in output and 'not recognized' not in output
     assert not (tmp_path / '.venv').exists()
 
@@ -223,7 +223,7 @@ def test_single_mineru_failure_offers_recovery_for_existing_pdf(tmp_path, monkey
     monkeypatch.setattr(cli, 'process_doi', fail)
     result = CliRunner().invoke(cli.app, ['process', doi, '--library-root', str(tmp_path)])
     assert result.exit_code == 1
-    assert '已有 PDF 已保留' in result.output and '补好PDF后双击转换.cmd' in result.output
+    assert '已有 PDF 已保留' in result.output and 'Retry_PDF.cmd' in result.output
     assert paths.pdf.read_bytes() == b'keep-existing-pdf'
 
 

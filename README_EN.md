@@ -2,126 +2,52 @@
 
 [中文](README.md) | **English**
 
-Local academic full-text acquisition and Markdown conversion.
+Turn a DOI list into full-text Markdown. Each batch has one reading folder, with files named after article titles and image binaries omitted.
 
-Supports public-source discovery, native XML/HTML/EPUB/TEI imports, MinerU API parsing, conservative scientific-content checks and title-named reading copies. Publisher recognition does not guarantee subscription access.
+## 1. Install
 
-## Documentation
+Extract the complete project, run **[Install.cmd](Install.cmd)**, choose Chinese or English, and follow the prompts.
 
-| Task | Guide |
-|---|---|
-| Install, choose language and configure APIs | Quick start below |
-| Process a DOI batch | [Detailed user guide](docs/USAGE.en.md) |
-| Add several downloaded PDFs and recover them in one run | [PDF recovery and file locations](docs/USAGE.en.md) |
-| Understand warnings, repeat runs and errors | [Status and troubleshooting](docs/USAGE.en.md) |
+Requires Python 3.10. If it is missing, the launcher provides the [download link](https://www.python.org/downloads/release/python-31011/); install Python and run `Install.cmd` again. Installation needs network access and preserves existing settings and papers.
 
-## Quick start
+## 2. Configure your APIs
 
-**Recommended: extract the full project and double-click [一键安装.cmd](一键安装.cmd).**
+Open the project's `.env` in Notepad and enter your own values:
 
-1. Select `1 中文` or `2 English`.
-2. The installer checks Python 3.10, creates/reuses this project's `.venv`, and installs dependencies. Network access is required; administrator privileges are not needed.
-3. Edit `.env` in Notepad with your API credentials, then run `一键批量整理Markdown.cmd`.
-
-If Python is missing, the launcher provides the official installer link; it does not automatically download/run Python installers. Existing `.env` and papers are preserved; a valid environment is reused and project dependencies are updated. Broken environments produce guidance instead of being deleted.
-
-Your selected language is saved in the local, Git-ignored `.paperflow-language` file. It controls batch/recovery prompts and summaries; papers are not translated, and existing folder names/data remain compatible. Rerun the installer to change language, or use `一键批量整理Markdown.cmd --language en` / `--language zh` for one run. Third-party pip/MinerU messages keep their original language.
-
-Check prerequisites without installing or changing configuration:
-
-```bat
-一键安装.cmd --language en --check
+```ini
+ELSEVIER_API_KEY=your_elsevier_key
+MINERU_BACKEND=api
+MINERU_API_TOKEN=your_mineru_token
 ```
 
-Manual setup remains available below for troubleshooting.
+Configure only what you need: Elsevier API retrieves entitled full-text XML; PDF conversion requires MinerU API, also accepting the existing `MINERU_API` alias. No local GPU is needed. PDFs are uploaded and may consume credits. Other API settings are optional; see comments in `.env.example`.
 
-The source ZIP is **not a portable installed app**: it excludes `.venv`, credentials and MinerU. Extract it first; the project root must directly contain `pyproject.toml`, `src` and `scripts`.
+## 3. Process a batch
 
-Requires Python **3.10** (`>=3.10,<3.11`). Check `py -3.10 --version`. If unavailable, install the [official Windows 64-bit Python 3.10 installer](https://www.python.org/downloads/release/python-31011/), including pip and the launcher, then reopen CMD. Python 3.10 is end-of-life; these are compatibility instructions for the currently tested V3, not a claim of support for newer Python versions.
+1. Prepare a TXT file with one DOI per line.
+2. Run **[Batch_Markdown.cmd](Batch_Markdown.cmd)**, drag the list into the window and press Enter.
+3. Choose an output folder and wait for individual results.
 
-For a fresh extraction, run these commands **one at a time in CMD**, adjusting only the first path:
-
-```bat
-cd /d "D:\paper\paperflow-v3"
-py -3.10 -m venv .venv
-.venv\Scripts\python.exe -m pip install --upgrade pip
-.venv\Scripts\python.exe -m pip install -e .
-if not exist .env copy .env.example .env
-.venv\Scripts\paperflow.exe version
-notepad .env
+```text
+Batch/
+├─ 整理好的Markdown/   Title-named reading files
+└─ 原始资料/           PDFs, XML and processing records
 ```
 
-Expect `PaperFlow 0.3.0`. Configure your own credentials and parser before launching the `.cmd` files. Pip installation requires network access. No environment activation is required. Do not copy another checkout's `.venv`; create one at the new location. Existing working environments need not be recreated.
+Implemented acquisition routes cover Elsevier, Springer Nature and other publishers/platforms. Automatic full-text availability depends on the article and access rights; missing full text can be supplied as a PDF.
 
-PDF parsing defaults to the full MinerU API: set your token in `.env`. PDFs are uploaded to MinerU and may incur charges. No local MinerU or GPU installation is needed. XML conversion does not call MinerU. API errors never trigger a local-model or light-mode fallback.
+## 4. Add several missing PDFs at once
 
-Existing installations can add development/test tools with:
+1. Find each article's folder from the terminal or `原始资料/待补PDF说明.txt`.
+2. Place the matching main PDF there, **keeping its original filename**. Keep one main PDF per article folder.
+3. Return to the batch's `原始资料` folder and run **`Retry_PDF_Batch.cmd`** once.
 
-```powershell
-.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.venv\Scripts\paperflow.exe version
-.venv\Scripts\paperflow.exe process-list "D:\papers\dois.txt" --library-root "D:\papers\batch\sources" --markdown-dir "D:\papers\batch\reading"
-```
+Markdown goes into the original reading folder. Missing PDFs and already converted full-text items are skipped; individual failures do not stop later papers. Read the window and `补PDF批量结果.csv` for results.
 
-On Windows, `一键批量整理Markdown.cmd` accepts a text file with one DOI per line and asks for an output folder. Successful body Markdown files are placed together and named after paper titles. Duplicate titles are disambiguated, manually edited reading copies preserved, and abstract-only results excluded by default.
+To retry one paper, use `Retry_PDF.cmd` inside its folder. If the PDF already exists and only parsing failed, fix the reported issue and retry without downloading again.
 
-## Missing full text: add your PDFs
+## Notes
 
-1. Read the terminal or `原始资料/待补PDF说明.txt` and locate each matching article folder.
-2. Put the corresponding main PDF there, keeping its original name; no rename is required.
-3. For one article, run its `补好PDF后双击转换.cmd`. For several PDFs, run `补齐PDF后批量转换.cmd` once from the batch's `原始资料` folder.
-4. Review the result and find title-named Markdown in the original reading folder.
-
-Batch recovery skips missing and already converted/full-document warning items, continues after individual failures, and writes `补PDF批量结果.csv`. Warnings remain to be reviewed. Keep one main PDF per paper folder, retain adjacent configuration JSON files, and regenerate shortcuts after moving the project. If parsing alone failed, reuse the existing PDF. PDF uploads may consume MinerU credits; local models are not called.
-
-The original `batch_results.csv` remains historical and is not rewritten by recovery. Check the recovery CSV and latest per-article `qa.json`. See the [full user guide](docs/USAGE.en.md) for folder diagrams, standalone no-DOI PDFs and troubleshooting.
-
-
-## Configuration
-
-- Elsevier: `ELSEVIER_API_KEY`, optional `ELSEVIER_INSTTOKEN`; entitlement may depend on campus IP.
-- Springer Nature: `SPRINGER_OA_API_KEY`, optional `SPRINGER_META_API_KEY`; metadata does not grant full-text access.
-- Wiley: `WILEY_API_KEY` (aliases `Wiley_API_KEY`, `WILEY_TDM_API_KEY`).
-- Optional discovery: `OPENALEX_API_KEY`, `CROSSREF_MAILTO`, `UNPAYWALL_EMAIL`.
-- Optional IEEE metadata: `IEEE_API_KEY`, `IEEE_API_ENABLED`; public PDF routes work independently.
-- MinerU: `MINERU_BACKEND=api` (default, full API), or explicitly `api-light` (limited quality). Uses `MINERU_API_TOKEN` (aliases `MINERU_API_KEY`/`MINERU_API`), optional `MINERU_API_MODEL` and `MINERU_API_TIMEOUT`. Migrate old `local` settings to `api`; `MINERU_EXECUTABLE` and `MINERU_TIER` are no longer used.
-
-PaperFlow no longer invokes local MinerU and does not need GPU PyTorch. API parsing may incur charges, and light mode differs in capabilities and quality. `.env` is ignored by Git; never publish credentials. Network settings are not changed automatically.
-
-## Commands
-
-```powershell
-# Export existing conversions without downloading or parsing
-.venv\Scripts\paperflow.exe export-markdown "D:\papers\reading" --library-root "D:\papers\sources"
-# Existing main PDF
-.venv\Scripts\paperflow.exe process "10.1021/acsenergylett.4c01233" --pdf "D:\papers\article.pdf" --library-root workspace\library --markdown-dir workspace\reading --mineru-backend api
-# Local PDF without a DOI
-.venv\Scripts\paperflow.exe parse-pdf "D:\papers\article.pdf" --output-root workspace\library --markdown-dir workspace\reading
-# Native XML/HTML/EPUB; optional DOI must match
-.venv\Scripts\paperflow.exe process-document "D:\papers\article.xml" --output-root workspace\library --markdown-dir workspace\reading
-# Official platform paper page; no MinerU
-.venv\Scripts\paperflow.exe process-url "https://proceedings.mlr.press/v202/dettmers23a.html" --download-only
-```
-
-Reading and source folders must be separate and non-nested. `--include-partial` explicitly exports labeled abstract-only copies. `--pdf`, `--pdf-url` and Elsevier `--xml` are mutually exclusive. See each command's `--help`.
-
-## Literature acquisition and PDF processing
-
-Implemented routes include Elsevier, Springer Nature, IEEE, Wiley, Taylor & Francis, MDPI, PLOS, Frontiers, eLife, AAAS, Copernicus, ACM, IOP, AIP, APS and ASCE, with additional CVPR/CVF, arXiv, JMLR and PMLR paper entry points.
-
-**Springer Nature coverage is not limited to Building Simulation.** Existing routes include OA full text from Springer, Nature Portfolio and BMC journals, using available structured full text or public PDFs per article. Configured Elsevier APIs can obtain entitled full-text XML.
-
-**If automatic acquisition does not obtain the article body, supply a PDF:** keep its original filename, place the matching main article in the indicated paper folder, and run the single/batch recovery CMD. MinerU API conversion then adds Markdown to the original reading folder. If parsing alone failed, fix the error and retry the existing PDF without downloading again. See the [PDF recovery guide](docs/USAGE.en.md).
-
-Open access does not guarantee automated acquisition of every article. Consult the processing record for source, access and full-text checks.
-
-Acquisition, article identity, completeness and Markdown conversion are separate stages. Accepted manuscripts/preprints are not silently treated as published versions. Preserve body text, references and reliable structured tables; omit image binaries and standalone display equations. OCR and scientific notation may require human review.
-
-Only use authorized/public content. No paywall, browser-challenge or TLS-verification bypass.
-
-## Development tests
-
-```powershell
-.venv\Scripts\python.exe -m pytest -q
-.venv\Scripts\python.exe -m ruff check src tests scripts
-```
+- Review per-paper results: abstracts are not full text, and warnings require checking the original.
+- Keep `.env` private. Source archives exclude your environment and papers.
+- Rerun `Install.cmd` to change language. Papers are not translated; third-party logs retain their original language.
