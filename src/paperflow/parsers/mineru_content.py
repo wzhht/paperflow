@@ -118,7 +118,7 @@ def convert_mineru_structured_content_to_markdown(
     - table captions/footnotes: preserve
     - image/chart visual content: discard
     - image/chart captions: preserve
-    - standalone equations: discard
+    - standalone equations: preserve recognized LaTeX
     - headers/page numbers/aside text/page footnotes: discard
     - unknown block types: preserve textual content conservatively
     """
@@ -151,7 +151,13 @@ def convert_mineru_structured_content_to_markdown(
                 continue
 
             if block_type in _DISPLAY_EQUATION_TYPES:
-                equations_removed += 1
+                content = sanitize_mineru_table_content(content)
+                if content:
+                    if not content.startswith(("$$", "\\[", "\\begin{")):
+                        content = "$$\n" + content + "\n$$"
+                    rendered.append(("equation", content))
+                else:
+                    rendered.append(("text", "[Formula unavailable in parser output]"))
                 continue
 
             if block_type == "doc_title":

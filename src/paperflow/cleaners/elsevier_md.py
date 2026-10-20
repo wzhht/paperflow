@@ -516,18 +516,13 @@ def clean_elsevier_markdown(
     str,
     ElsevierMarkdownStats,
 ]:
-    without_math, equation_count = DISPLAY_MATH_RE.subn(
-        "\n\n",
-        markdown,
-    )
-
     (
         cleaned,
         relocated_table_ids,
         missing_float_table_ids,
         float_table_ids,
     ) = _relocate_float_tables(
-        without_math,
+        markdown,
         xml_content,
     )
 
@@ -554,7 +549,7 @@ def clean_elsevier_markdown(
     reference_ids = set(REFERENCE_ID_RE.findall(cleaned))
 
     stats = ElsevierMarkdownStats(
-        display_equations_removed=(equation_count),
+        display_equations_removed=0,
         float_table_ids=(float_table_ids),
         relocated_table_ids=(relocated_table_ids),
         missing_float_table_ids=(missing_float_table_ids),

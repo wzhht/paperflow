@@ -350,9 +350,6 @@ def _process_elsevier(
     warnings: list[str] = []
     failures: list[str] = []
 
-    if markdown_stats.remaining_display_math != 0:
-        failures.append("display_math_remaining")
-
     if markdown_stats.missing_float_table_ids:
         failures.append("missing_float_tables")
 
@@ -1017,9 +1014,6 @@ def _process_pdf_with_mineru(
     if audit.remaining_base64:
         failures.append("remaining_base64")
 
-    if audit.remaining_display_equations:
-        failures.append("remaining_display_equations")
-
     if audit.mojibake:
         failures.append("mojibake")
 
@@ -1365,8 +1359,8 @@ def _process_native_document(paths, content, kind, *, route, source, source_url=
     audit = audit_jats_table_numeric_values(candidate, markdown)
     if not audit.values_match:
         raise PipelineContentError("Native document table numeric audit failed")
-    if any(marker in markdown for marker in ("![", "<img", "data:image", "$$", "\\[")):
-        raise PipelineContentError("Native document contains image/display-math residue")
+    if any(marker in markdown for marker in ("![", "<img", "data:image")):
+        raise PipelineContentError("Native document contains image residue")
     # Publish only after verification, leaving existing successful Markdown intact on rejection.
     candidate.replace(paths.directory / "jats.xml")
     target.replace(paths.llm_md)

@@ -69,7 +69,6 @@ def markdown_to_structured(text: str) -> dict:
     # Lightweight API exposes no layout or original table JSON: never claim table QA.
     text = re.sub(r"!\[[^\]]*\]\([^\n]*?\)", "", text)
     text = re.sub(r"<img\b[^>]*>", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\$\$.*?\$\$|\\\[.*?\\\]", "", text, flags=re.DOTALL)
     blocks = []
     for part in re.split(r"\n\s*\n", text):
         part = part.strip()

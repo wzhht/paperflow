@@ -1,5 +1,7 @@
 # PaperFlow
 
+Inline and display equations are retained as LaTeX math. PDF equations depend on MinerU recognition; check important formulas against the source. Existing Markdown files are not updated automatically.
+
 [中文](README.md) | English
 
 Fetch papers from a DOI list and convert them to Markdown. Reading files are collected in one folder, named after article titles, without images.

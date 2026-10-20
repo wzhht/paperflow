@@ -84,7 +84,7 @@ def test_springer_inline_variables_are_preserved_once(tmp_path):
     assert "\\documentclass" not in markdown
 
 
-def test_display_formula_remains_omitted(tmp_path):
+def test_display_formula_is_preserved(tmp_path):
     xml = r"""<article>
   <front>
     <article-meta>
@@ -116,5 +116,5 @@ def test_display_formula_remains_omitted(tmp_path):
 
     assert "Before the equation." in markdown
     assert "After the equation." in markdown
-    assert "x=y+1" not in markdown
+    assert "$$\nx=y+1\n$$" in markdown
     assert "\\documentclass" not in markdown

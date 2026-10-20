@@ -6,7 +6,7 @@ from paperflow.cleaners.elsevier_md import (
 )
 
 
-def test_removes_display_math_and_preserves_values():
+def test_preserves_display_math_and_values():
     markdown = """
 ## 3 Methods
 
@@ -36,8 +36,9 @@ Done.
         "<root/>",
     )
 
-    assert "$$" not in cleaned
-    assert "P\\left" not in cleaned
+    assert "$$" in cleaned
+    assert "P\\left" in cleaned
+    assert '<a id="e0005"></a>' in cleaned
 
     assert "SHGC = 0.75" in cleaned
 
@@ -45,9 +46,9 @@ Done.
 
     assert "100 kWh/m2" in cleaned
 
-    assert stats.display_equations_removed == 1
+    assert stats.display_equations_removed == 0
 
-    assert stats.remaining_display_math == 0
+    assert stats.remaining_display_math == 2
 
     assert stats.has_results is True
 
@@ -217,11 +218,11 @@ Done.
 
     assert output_path.exists()
 
-    assert "$$" not in output
+    assert "$$" in output
 
     assert "Value = 42." in output
 
-    assert stats.display_equations_removed == 1
+    assert stats.display_equations_removed == 0
 
 
 def test_normalizes_table_emphasis():

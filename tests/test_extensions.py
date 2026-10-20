@@ -66,7 +66,7 @@ def test_cloud_conversion_preserves_tables_text_references_without_images(tmp_pa
     assert "# Actual paper title" in text
     assert "1.25" in text and "°C" in text and "inline $U$" in text
     assert "Figure caption retained" in text and "[1]" in text
-    assert "<img" not in text and "$$" not in text
+    assert "<img" not in text and "$$x=1$$" in text
     assert (
         audit.table_content_exact_match
         and audit.table_numeric_values_match
@@ -174,7 +174,7 @@ def test_missing_precision_token_and_lightweight_quality_are_explicit(tmp_path):
     )
     text, _ = convert_mineru_structured_content_to_markdown(data, tmp_path / "light.md")
     assert data["is_full_document"] is False and data["warnings"]
-    assert "![" not in text and "$$" not in text and "$U$" in text
+    assert "![" not in text and "$$x=1$$" in text and "$U$" in text
 
 
 def test_cloud_bad_schema_is_not_faked():

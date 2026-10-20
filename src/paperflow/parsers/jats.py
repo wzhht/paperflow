@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from litdown import mml_to_tex
 from lxml import etree
 
 XLINK_HREF = "{http://www.w3.org/1999/xlink}href"
@@ -12,6 +13,7 @@ _BLOCK_TAGS = {
     "table-wrap",
     "list",
     "disp-formula",
+    "disp-formula-group",
 }
 
 
@@ -103,14 +105,8 @@ def _render_article(article: etree._Element) -> str:
     body = article.xpath("./*[local-name()='body']")
 
     if body:
-        for section in body[0].xpath("./*[local-name()='sec']"):
-            lines.extend(_render_section(section, level=2))
-
-        # Some valid JATS documents place body paragraphs directly
-        # under <body> instead of wrapping them in <sec>.
-        for paragraph in body[0].xpath("./*[local-name()='p']"):
-            for block in _render_paragraph(paragraph):
-                lines.extend(["", block])
+        # Use the same block renderer to preserve body-level equations and order.
+        lines.extend(_render_section(body[0], level=2))
 
     back = article.xpath("./*[local-name()='back']")
 
@@ -181,9 +177,11 @@ def _render_section(
             if rendered_list:
                 lines.extend(["", rendered_list])
 
-        # Display equations are intentionally omitted.
         elif tag == "disp-formula":
-            continue
+            lines.extend(["", _render_display_formula(child)])
+
+        elif tag == "disp-formula-group":
+            lines.extend(_render_section(child, level=level))
 
     return lines
 
@@ -227,7 +225,11 @@ def _render_paragraph(
             elif tag == "list":
                 block = _render_list(child)
 
-            # disp-formula is intentionally discarded.
+            elif tag == "disp-formula":
+                block = _render_display_formula(child)
+
+            elif tag == "disp-formula-group":
+                block = "\n\n".join(_render_section(child, level=2)).strip()
 
             if block:
                 blocks.append(block)
@@ -274,18 +276,18 @@ def _render_inline_child(node: etree._Element) -> str:
 
         return str(node.get(XLINK_HREF) or "")
 
-    if tag == "inline-formula":
+    if tag in {"inline-formula", "disp-formula"}:
         return _render_inline_formula(node)
 
     return _inline_text(node)
 
 
-def _render_inline_formula(node: etree._Element) -> str:
+def _render_inline_formula(node: etree._Element, *, display: bool = False) -> str:
     tex_math = node.xpath(".//*[local-name()='tex-math'][1]")
 
     if tex_math:
         raw_tex = "".join(tex_math[0].itertext())
-        cleaned_tex = _clean_inline_tex_math(raw_tex)
+        cleaned_tex = _clean_inline_tex_math(raw_tex, preserve_lines=display)
 
         if cleaned_tex:
             return f"${cleaned_tex}$"
@@ -293,7 +295,7 @@ def _render_inline_formula(node: etree._Element) -> str:
     mathml = node.xpath(".//*[local-name()='math'][1]")
 
     if mathml:
-        text = _collapse_ws("".join(mathml[0].itertext()))
+        text = mml_to_tex(mathml[0]).strip()
 
         if text:
             return f"${text}$"
@@ -302,11 +304,25 @@ def _render_inline_formula(node: etree._Element) -> str:
     # tex-math nor MathML. Avoid recursive rendering here because
     # alternatives commonly contain multiple representations of
     # the same formula.
-    text = _collapse_ws("".join(node.itertext()))
-    return text
+    text = _collapse_ws((node.text or "") + "".join(
+        "".join(child.itertext()) for child in node
+        if _local_name(child) not in {"label", "graphic", "inline-graphic", "alternatives"}
+    ))
+    return text or "[Formula unavailable in source]"
 
 
-def _clean_inline_tex_math(text: str) -> str:
+def _render_display_formula(node: etree._Element) -> str:
+    # Reuse the inline selection logic: TeX before MathML, never both alternatives.
+    content = _render_inline_formula(node, display=True)
+    if content.startswith("$") and content.endswith("$"):
+        content = content[1:-1]
+    label = _first_text(node, "./*[local-name()='label']")
+    if not content:
+        content = "[Formula unavailable in source]"
+    return "$$\n" + content + "\n$$" + (f"\n\n{label}" if label else "")
+
+
+def _clean_inline_tex_math(text: str, *, preserve_lines: bool = False) -> str:
     cleaned = text.strip()
 
     document_match = re.search(
@@ -339,7 +355,8 @@ def _clean_inline_tex_math(text: str) -> str:
         cleaned = cleaned.replace("\\begin{document}", "")
         cleaned = cleaned.replace("\\end{document}", "")
 
-    cleaned = _collapse_ws(cleaned)
+    if not preserve_lines:
+        cleaned = _collapse_ws(cleaned)
 
     delimiter_pairs = (
         ("$$", "$$"),
@@ -666,11 +683,7 @@ def _abstract(article: etree._Element) -> str:
 
     paragraphs = abstracts[0].xpath("./*[local-name()='p']")
 
-    return "\n\n".join(
-        _collapse_ws(_inline_text(paragraph))
-        for paragraph in paragraphs
-        if _collapse_ws(_inline_text(paragraph))
-    )
+    return "\n\n".join(block for paragraph in paragraphs for block in _render_paragraph(paragraph))
 
 
 def _publication_date(article: etree._Element) -> str:

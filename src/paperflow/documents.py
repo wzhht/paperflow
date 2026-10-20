@@ -44,6 +44,18 @@ def _inline(source, target):
                 target.text = (target.text or "") + (child.tail or "")
             continue
         tag = _name(child)
+        if tag in {"math", "formula"}:
+            node = etree.SubElement(
+                target, "disp-formula" if child.get("display") == "block" else "inline-formula"
+            )
+            if tag == "math":
+                preserved = copy.deepcopy(child)
+                preserved.tail = None
+                node.append(preserved)
+            else:
+                etree.SubElement(node, "tex-math").text = _text(child)
+            node.tail = child.tail
+            continue
         if tag in {"img", "script", "style", "noscript", "iframe"}:
             if child.tail:
                 if len(target):
@@ -157,6 +169,11 @@ def _html_to_jats(content, doi=None, title=None, *, allow_body=False, source_doi
                 target = etree.SubElement(current, "list", {"list-type": "order" if tag == "ol" else "bullet"})
                 for item in node.xpath("./li"):
                     _inline(item, etree.SubElement(etree.SubElement(target, "list-item"), "p"))
+            elif tag == "math":
+                formula = etree.SubElement(current, "disp-formula")
+                preserved = copy.deepcopy(node)
+                preserved.tail = None
+                formula.append(preserved)
             elif tag == "figure":
                 for nested_table in node.xpath(".//table"):
                     wrapper = etree.Element("div")
@@ -215,7 +232,10 @@ def _tei_to_jats(tree, doi=None):
                 node = etree.SubElement(target, "list")
                 for item in child:
                     _inline(item, etree.SubElement(etree.SubElement(node, "list-item"), "p"))
-            elif tag in {"figure", "formula"}:
+            elif tag == "formula":
+                node = etree.SubElement(target, "disp-formula")
+                etree.SubElement(node, "tex-math").text = _text(child)
+            elif tag == "figure":
                 captions = child.xpath('./*[local-name()="figDesc"]')
                 if captions:
                     node = etree.SubElement(target, "fig")
@@ -447,7 +467,7 @@ def normalize_document(content, kind, *, doi=None, title=None):
                     if child.tail and child.tail.strip():
                         raise ValueError("Unwrapped body text after XML comment")
                     continue
-                if _name(child) not in {"title", "p", "sec", "table-wrap", "fig", "list", "disp-formula"}:
+                if _name(child) not in {"title", "p", "sec", "table-wrap", "fig", "list", "disp-formula", "disp-formula-group"}:
                     raise ValueError(f"Unsupported native body block: {_name(child)}; refusing silent content loss")
         ordered = etree.Element("sec")
         for child in list(body):
