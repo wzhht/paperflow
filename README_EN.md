@@ -61,7 +61,7 @@ Create a TXT with one DOI per line, without a heading or numbering. Example: [ex
 10.1016/j.buildenv.2025.114072
 ```
 
-Run [Batch_Markdown.cmd](Batch_Markdown.cmd), drag in the TXT and choose an output folder. The example can be used directly; full-text availability still depends on your access and network.
+Run [Batch_Markdown.cmd](Batch_Markdown.cmd), drag in the TXT and choose a parent folder. A batch folder is created using the TXT filename without its extension: `UK_retrofit_priority_18_dois.txt` → `UK_retrofit_priority_18_dois`. Press Enter to use `workspace\批量文献` as the parent. Full-text availability depends on your access and network.
 
 Reading files are in 整理好的Markdown. PDFs, XML and processing records are in 原始资料.
 

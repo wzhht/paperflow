@@ -27,14 +27,17 @@ def main():
     source = Path(value).expanduser().resolve()
     if not source.is_file():
         parser.error(t('找不到 DOI 清单文件，请确认拖入的是 txt 文件。', 'DOI text file not found.'))
-    default = PROJECT / 'workspace' / '批量文献' / source.stem
+    default_parent = PROJECT / 'workspace' / '批量文献'
     if args.output_dir is None:
-        text = input(t('保存到哪个文件夹？直接回车使用：',
-                       'Output folder? Press Enter to use:') + f'\n{default}\n').strip().strip('"')
-        output = Path(text).expanduser().resolve() if text else default
+        text = input(t('保存在哪个位置？会自动建立与TXT同名的批次文件夹。直接回车使用：',
+                       'Choose a parent folder. A batch folder named after the TXT will be created. '
+                       'Press Enter to use:') + f'\n{default_parent}\n').strip().strip('"')
+        parent = Path(text).expanduser().resolve() if text else default_parent
+        output = parent / source.stem
     else:
         output = args.output_dir.expanduser().resolve()
     library, reading = output / '原始资料', output / '整理好的Markdown'
+    print(t('\n本批保存目录：', '\nBatch folder: ') + str(output), flush=True)
     print(t('\n正文 Markdown 将集中保存在：', '\nFull-text Markdown folder: ') + str(reading), flush=True)
     print(t('文件按论文标题命名；同名自动区分。未取得全文的摘要不会混入。',
             'Files use article titles; duplicate names are disambiguated. Abstract-only results excluded.'),

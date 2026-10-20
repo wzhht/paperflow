@@ -61,7 +61,7 @@ notepad .env
 10.1016/j.buildenv.2025.114072
 ```
 
-双击 [Batch_Markdown.cmd](Batch_Markdown.cmd)，拖入TXT，选择保存位置。示例可直接试用，是否取得全文取决于你的权限和网络。
+双击 [Batch_Markdown.cmd](Batch_Markdown.cmd)，拖入TXT，选择保存位置。程序会自动建立TXT同名文件夹：例如 `UK_retrofit_priority_18_dois.txt` → `UK_retrofit_priority_18_dois`。直接回车则保存在 `workspace\批量文献` 下。示例是否取得全文取决于你的权限和网络。
 
 结果在“整理好的Markdown”；PDF、XML和处理记录在“原始资料”。
 

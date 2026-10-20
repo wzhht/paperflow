@@ -129,6 +129,28 @@ def test_friendly_script_only_delegates_to_existing_cli(tmp_path, monkeypatch):
     assert module.main() == 0
 
 
+@pytest.mark.parametrize('custom_parent', [False, True])
+def test_friendly_batch_folder_uses_input_txt_name(tmp_path, monkeypatch, custom_parent):
+    spec = importlib.util.spec_from_file_location('batch_named', ROOT / 'scripts/batch_markdown.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / 'UK_retrofit_priority_18_dois.txt'
+    source.write_text('10.1016/test')
+    monkeypatch.setattr(module, 'PROJECT', tmp_path / 'project')
+    monkeypatch.setattr(sys, 'argv', ['batch_markdown', str(source)])
+    parent = tmp_path / 'My papers' if custom_parent else module.PROJECT / 'workspace' / '批量文献'
+    monkeypatch.setattr('builtins.input', lambda prompt: f'"{parent}"' if custom_parent else '')
+
+    def run(command, **kwargs):
+        batch = parent / source.stem
+        assert str(batch / '整理好的Markdown') in command
+        assert str(batch / '原始资料') in command
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(module.subprocess, 'run', run)
+    assert module.main() == 0
+
+
 @pytest.mark.skipif(os.name != 'nt', reason='Windows launcher')
 def test_real_windows_launcher_help_does_not_start_downloads():
     launcher = ROOT / 'Batch_Markdown.cmd'
