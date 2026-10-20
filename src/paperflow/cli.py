@@ -131,7 +131,7 @@ def _pdf_recovery_lines(doi, library_root, markdown_dir=None):
         ambiguous = False
     except MultipleLocalPdfError:
         pdf, ambiguous = None, True
-    pdf_example = pdf or paths.directory / '你的正文文件名.pdf'
+    pdf_example = pdf or paths.directory / t('你的正文文件名.pdf', 'your_article.pdf')
     command = (f'{executable} process "{paths.doi}" --pdf "{pdf_example}" '
                f'--library-root "{library_root.resolve()}"')
     if markdown_dir is not None:
@@ -380,12 +380,12 @@ def process_list_command(
                    'Keep original PDF names in matching paper folders, then double-click once:'),
                  str(batch_launcher),
                  t('缺PDF和已生成正文的条目会跳过；处理结果见补PDF批量结果.csv。',
-                   'Missing/converted items are skipped; results: 补PDF批量结果.csv.'), '']
+                   'Missing/converted items are skipped; results: pdf_recovery_results.csv.'), '']
         for item in pending:
-            notes.extend([f'DOI：{item.doi}', redact_error(item.error),
+            notes.extend([f'DOI: {item.doi}', redact_error(item.error),
                           *_pdf_recovery_lines(item.doi, library_root, markdown_dir), ''])
         library_root.mkdir(parents=True, exist_ok=True)
-        note_path = library_root / '待补PDF说明.txt'
+        note_path = library_root / t('待补PDF说明.txt', 'missing_pdfs.txt')
         note_path.write_text('\n'.join(notes), encoding='utf-8')
         typer.echo(t('补 PDF 的目录和转换命令已保存：', 'PDF recovery instructions saved: ')
                    + str(note_path.resolve()))

@@ -65,6 +65,8 @@ notepad .env
 
 结果在“整理好的Markdown”；PDF、XML和处理记录在“原始资料”。
 
+安装时选择 English，新的批次会使用 `workspace\batches`、`markdown` 和 `sources` 等英文名称。切换语言不会重命名已有批次或论文文件。
+
 ## 补PDF
 
 未取得全文时，按窗口提示把正文PDF放进对应论文目录，保留原文件名，每篇只放一份正文。

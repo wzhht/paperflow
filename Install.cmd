@@ -40,10 +40,15 @@ echo.
 pause
 exit /b %PAPERFLOW_EXIT%
 :missing_python
-echo Python 3.10 not found. Install Python 3.10, then run this file again.
+if "%PAPERFLOW_INSTALL_LANGUAGE%"=="en" goto missing_python_en
 echo 未找到Python 3.10。请先安装Python 3.10，再双击本文件。
+goto python_link
+:missing_python_en
+echo Python 3.10 not found. Install Python 3.10, then run this file again.
+:python_link
 echo https://www.python.org/downloads/release/python-31011/
-echo See README.md / README_EN.md. No existing environment was deleted.
+if "%PAPERFLOW_INSTALL_LANGUAGE%"=="en" echo See README_EN.md. No existing environment was deleted.
+if not "%PAPERFLOW_INSTALL_LANGUAGE%"=="en" echo 详见README.md。没有删除现有环境。
 pause
 exit /b 2
 :failed

@@ -9,14 +9,15 @@ import sys
 from pathlib import Path
 
 from paperflow.config import redact_error
-from paperflow.language import t
+from paperflow.language import get_language, t
 from paperflow.recovery import MultipleLocalPdfError, find_local_pdf
 from paperflow.storage import build_paper_paths
 
 LAUNCHER_NAME = "Retry_PDF.cmd"
-CONFIG_NAME = "补PDF转换配置.json"
+CONFIG_NAME = "pdf_recovery.json"
 BATCH_LAUNCHER_NAME = "Retry_PDF_Batch.cmd"
-BATCH_CONFIG_NAME = "批量补PDF转换配置.json"
+BATCH_CONFIG_NAME = "pdf_recovery_batch.json"
+LEGACY_CONFIG_NAME = "补PDF转换配置.json"
 
 
 def create_pdf_recovery(doi, library_root, markdown_dir=None):
@@ -75,17 +76,18 @@ def _write_launcher(launcher, config_name, project, python, *, require_pdf):
         f'cd /d "{cmd_path(project)}"',
         "if errorlevel 1 goto missing_environment",
         'set "PYTHONUTF8=1"', 'set "PYTHONIOENCODING=utf-8"',
+        f'set "PAPERFLOW_LANGUAGE={get_language()}"',
         '"%PAPERFLOW_PYTHON%" -m paperflow.pdf_resume "%~dp0' + config_name + '"',
         'set "PAPERFLOW_EXIT=%ERRORLEVEL%"', "echo.", "pause", "exit /b %PAPERFLOW_EXIT%",
         ":missing_pdf",
-        "echo 请下载正文PDF，保留原名，放在本CMD同目录。",
-        "echo Download the main PDF here; keep its original filename.",
-        'echo PDF应放在这个目录："%~dp0"',
-        "echo 放好后重新双击本文件。不要放补充材料或其他论文。",
-        "echo Then double-click again. Do not put supplementary files here.",
+        t("echo 请下载正文PDF，保留原名，放在本CMD同目录。",
+          "echo Download the main PDF here; keep its original filename."),
+        t('echo PDF应放在这个目录："%~dp0"', 'echo PDF folder: "%~dp0"'),
+        t("echo 放好后重新双击本文件。不要放补充材料或其他论文。",
+          "echo Then double-click again. Do not put supplementary files here."),
         "pause", "exit /b 2", ":missing_environment",
-        "echo 找不到PaperFlow环境或项目目录。请按项目README安装，移动项目后重新生成本入口。",
-        "echo Project/environment missing. Run the installer; regenerate this shortcut after moving the project.",
+        t("echo 找不到PaperFlow环境或项目目录。请按项目README安装，移动项目后重新生成本入口。",
+          "echo Project/environment missing. Run the installer; regenerate this shortcut after moving the project."),
         "pause", "exit /b 2", "",
     ]
     launcher.write_bytes("\r\n".join(lines).encode("utf-8"))
@@ -125,7 +127,10 @@ def run_batch_recovery(config_path, config):
     if root != config_path.parent:
         raise ValueError(t("批量转换配置与原始资料目录不匹配，请重新生成入口。",
                            "Batch configuration folder mismatch; regenerate the launcher."))
-    configs = sorted(root.glob("*/" + CONFIG_NAME))
+    # Read historical Chinese config names, preferring the current file if both exist.
+    by_folder = {p.parent: p for p in root.glob("*/" + LEGACY_CONFIG_NAME)}
+    by_folder.update({p.parent: p for p in root.glob("*/" + CONFIG_NAME)})
+    configs = [by_folder[folder] for folder in sorted(by_folder)]
     rows = []
     print(t("批量补PDF：自动识别PDF，保留原名；已有正文和缺PDF的跳过。",
             "Batch recovery: original PDF names accepted; completed/missing items skipped."), flush=True)
@@ -169,7 +174,7 @@ def run_batch_recovery(config_path, config):
         from paperflow.storage.flat_export import export_markdown
 
         export_markdown(root, config["markdown_dir"])
-    report = root / "补PDF批量结果.csv"
+    report = root / t("补PDF批量结果.csv", "pdf_recovery_results.csv")
     with report.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(["DOI", t("结果", "Result"), t("说明", "Details"), t("论文目录", "Paper folder")])
@@ -192,8 +197,8 @@ def _label(value):
 
 
 def _run_one(paths, config, pdf):
-    print(f"DOI：{paths.doi}", flush=True)
-    print(f"PDF：{pdf}", flush=True)
+    print(f"DOI: {paths.doi}", flush=True)
+    print(f"PDF: {pdf}", flush=True)
     print(t("通过MinerU完整API转换，会上传PDF并可能消耗额度；不调用本地模型。",
             "Using full MinerU API: PDF upload may consume credits; no local models."), flush=True)
     command = [sys.executable, "-c", "from paperflow.cli import app; app()", "process",

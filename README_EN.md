@@ -1,10 +1,10 @@
 # PaperFlow
 
-Inline and display equations are retained as LaTeX math. PDF equations depend on MinerU recognition; check important formulas against the source. Existing Markdown files are not updated automatically.
-
 [中文](README.md) | English
 
 Fetch papers from a DOI list and convert them to Markdown. Reading files are collected in one folder, named after article titles, without images.
+
+Inline and display equations are retained as LaTeX math. Check important PDF formulas against the source. Existing Markdown is not updated automatically.
 
 ## Sources
 
@@ -22,7 +22,7 @@ Full-text availability depends on the article's access status and your entitleme
 
 Windows, Python 3.10 ([download](https://www.python.org/downloads/release/python-31011/)).
 
-Run [Install.cmd](Install.cmd) and choose a language. Then edit `.env` with your API credentials:
+Run [Install.cmd](Install.cmd), select **2. English**, then edit `.env` with your API credentials:
 
 ```ini
 ELSEVIER_API_KEY=your_elsevier_key
@@ -61,14 +61,20 @@ Create a TXT with one DOI per line, without a heading or numbering. Example: [ex
 10.1016/j.buildenv.2025.114072
 ```
 
-Run [Batch_Markdown.cmd](Batch_Markdown.cmd), drag in the TXT and choose a parent folder. A batch folder is created using the TXT filename without its extension: `UK_retrofit_priority_18_dois.txt` → `UK_retrofit_priority_18_dois`. Press Enter to use `workspace\批量文献` as the parent. Full-text availability depends on your access and network.
+Run [Batch_Markdown.cmd](Batch_Markdown.cmd), drag in the TXT and choose a parent folder. Press Enter to use `workspace\batches`. The TXT filename becomes the batch folder name:
 
-Reading files are in 整理好的Markdown. PDFs, XML and processing records are in 原始资料.
+```text
+workspace/batches/UK_retrofit_priority_18_dois/
+├── markdown/     # Papers named after article titles
+└── sources/      # PDFs, XML and processing records
+```
+
+English mode uses English output names. Existing batch folders keep their original paths when switching languages. User-supplied filenames and article titles are not translated.
 
 ## Missing PDFs
 
 Place each matching main PDF in the article folder indicated by the window. Keep its original filename and one main PDF per article folder.
 
-Run `Retry_PDF_Batch.cmd` in 原始资料 to convert all ready PDFs. Use `Retry_PDF.cmd` inside an article folder to retry just that paper.
+Read `sources/missing_pdfs.txt` for the matching paper folders. Run `Retry_PDF_Batch.cmd` in `sources` to convert all ready PDFs, or `Retry_PDF.cmd` inside an article folder to retry one paper.
 
-Markdown goes to the original reading folder. Completed and missing-PDF items are skipped; results appear in the window and 补PDF批量结果.csv. Abstracts are not full text; review warnings against the original.
+Markdown goes to the original reading folder. Completed and missing-PDF items are skipped; results appear in the window and `sources/pdf_recovery_results.csv`. Abstracts are not full text; review warnings against the original.

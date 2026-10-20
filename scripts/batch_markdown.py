@@ -14,11 +14,11 @@ PROJECT = Path(__file__).resolve().parents[1]
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Batch DOI to Markdown / 批量整理Markdown')
-    parser.add_argument('input_file', nargs='?', help='DOI text file / 每行一个DOI的txt清单')
-    parser.add_argument('--output-dir', type=Path, help='Batch output folder / 本批保存目录')
+    parser = argparse.ArgumentParser(description=t('批量整理Markdown', 'Batch DOI to Markdown'))
+    parser.add_argument('input_file', nargs='?', help=t('每行一个DOI的txt清单', 'DOI text file'))
+    parser.add_argument('--output-dir', type=Path, help=t('本批保存目录', 'Exact batch output folder'))
     parser.add_argument('--mineru-backend', choices=['api', 'api-light'])
-    parser.add_argument('--language', choices=['zh', 'en'], help='Override language / 本次使用的语言')
+    parser.add_argument('--language', choices=['zh', 'en'], help=t('本次使用的语言', 'Override language'))
     args = parser.parse_args()
     if args.language:
         os.environ['PAPERFLOW_LANGUAGE'] = args.language
@@ -27,7 +27,7 @@ def main():
     source = Path(value).expanduser().resolve()
     if not source.is_file():
         parser.error(t('找不到 DOI 清单文件，请确认拖入的是 txt 文件。', 'DOI text file not found.'))
-    default_parent = PROJECT / 'workspace' / '批量文献'
+    default_parent = PROJECT / 'workspace' / t('批量文献', 'batches')
     if args.output_dir is None:
         text = input(t('保存在哪个位置？会自动建立与TXT同名的批次文件夹。直接回车使用：',
                        'Choose a parent folder. A batch folder named after the TXT will be created. '
@@ -36,7 +36,16 @@ def main():
         output = parent / source.stem
     else:
         output = args.output_dir.expanduser().resolve()
-    library, reading = output / '原始资料', output / '整理好的Markdown'
+    library = output / t('原始资料', 'sources')
+    reading = output / t('整理好的Markdown', 'markdown')
+    # Reuse a previous batch's directories after a language switch; never split its data.
+    for current, alternate in ((library, output / t('sources', '原始资料')),
+                               (reading, output / t('markdown', '整理好的Markdown'))):
+        if not current.exists() and alternate.exists():
+            if current == library:
+                library = alternate
+            else:
+                reading = alternate
     print(t('\n本批保存目录：', '\nBatch folder: ') + str(output), flush=True)
     print(t('\n正文 Markdown 将集中保存在：', '\nFull-text Markdown folder: ') + str(reading), flush=True)
     print(t('文件按论文标题命名；同名自动区分。未取得全文的摘要不会混入。',

@@ -104,7 +104,7 @@ def test_english_batch_and_recovery_prompts(tmp_path, monkeypatch, capsys):
     output = capsys.readouterr().out
     assert 'Batch recovery' in output and 'Missing PDF' in output
     assert '保留原名' not in output
-    assert 'Result,Details,Paper folder' in (tmp_path / '补PDF批量结果.csv').read_text(encoding='utf-8-sig')
+    assert 'Result,Details,Paper folder' in (tmp_path / 'pdf_recovery_results.csv').read_text(encoding='utf-8-sig')
 
     spec = importlib.util.spec_from_file_location('batch_english', ROOT / 'scripts/batch_markdown.py')
     module = importlib.util.module_from_spec(spec)
