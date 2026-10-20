@@ -7,7 +7,7 @@ from io import BytesIO
 from urllib.parse import parse_qs, quote, urljoin, urlsplit, urlunsplit
 
 import httpx
-from lxml import html
+from lxml import etree, html
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError, PdfStreamError
 
@@ -93,14 +93,19 @@ def _mdpi_pdf_identity(content, doi):
     return bool(re.search(pattern + r'(?![a-z0-9./_-])', text, re.IGNORECASE))
 
 
+def _parse_optional_html(content):
+    """Unusable discovery pages contain no trustworthy links; try other sources."""
+    try:
+        return html.fromstring(content)
+    except (etree.LxmlError, ValueError, TypeError):
+        return html.Element('html')
+
+
 def _repository_pdf_links(response, doi, title):
     """Read ordinary citation metadata on an OA repository's article page."""
     if _access_warning(response).startswith('browser_verification_required:'):
         return []
-    try:
-        tree = html.fromstring(response.content)
-    except (ValueError, TypeError):
-        return []
+    tree = _parse_optional_html(response.content)
     identifiers = tree.xpath('//meta[@name="citation_doi"]/@content')
     titles = tree.xpath('//meta[@name="citation_title"]/@content')
     normalized = re.sub(r'\W', '', title).casefold()
@@ -131,10 +136,7 @@ def _embedded_ieee_pdf(response):
     number = parse_qs(parsed.query).get('arnumber', [''])[0]
     if not number.isdigit():
         return []
-    try:
-        tree = html.fromstring(response.content)
-    except (ValueError, TypeError):
-        return []
+    tree = _parse_optional_html(response.content)
     urls = tree.xpath('//iframe/@src|//embed/@src|//object/@data')
     result = []
     for href in urls:
@@ -302,13 +304,13 @@ def discover_pdf(doi, settings, *, transport=None, explicit_url=None):
             if int(year) >= 2013:
                 response = optional(f"https://openaccess.thecvf.com/{event.upper()}{year}?day=all")
                 if response is not None:
-                    tree = html.fromstring(response.content)
+                    tree = _parse_optional_html(response.content)
                     expected = re.sub(r"\W", "", metadata["title"]).casefold()
                     for link in tree.xpath('//dt[@class="ptitle"]/a'):
                         if re.sub(r"\W", "", link.text_content()).casefold() == expected:
                             page = optional(urljoin(str(response.url), link.get("href")))
                             if page is not None:
-                                for href in html.fromstring(page.content).xpath("//a/@href"):
+                                for href in _parse_optional_html(page.content).xpath("//a/@href"):
                                     if href.lower().endswith(".pdf") and "/papers/" in href:
                                         candidates.append(
                                             (urljoin(str(page.url), href), "cvf_open_pdf")
@@ -330,7 +332,10 @@ def discover_pdf(doi, settings, *, transport=None, explicit_url=None):
                 if not _public_url(str(response.url)):
                     continue
                 if source == 'oa_repository_page':
-                    candidates.extend(_repository_pdf_links(response, doi, metadata['title']))
+                    links = _repository_pdf_links(response, doi, metadata['title'])
+                    candidates.extend(links)
+                    if not links:
+                        warnings.append('oa_repository_page_no_verified_pdf_links')
                     continue
                 validation = validate_pdf_bytes(response.content)
                 if validation.signature_ok and validation.parseable and validation.actual_pages:
