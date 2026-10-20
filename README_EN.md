@@ -2,7 +2,11 @@
 
 [中文](README.md) | English
 
-Fetch papers from a DOI list and convert them to Markdown. Reading files are collected in one folder, named after article titles, without images.
+**Turn papers into Markdown that is easier to use with AI reading and retrieval tools.**
+
+PDFs are designed for people, but columns, headers, footers and broken lines can make extracted text difficult to follow. PaperFlow fetches full text from a DOI list and organizes the body, headings, tables, equations and references into Markdown for reading, comparing and discussing papers with tools such as ChatGPT, or for local knowledge bases and evidence retrieval.
+
+Start with one DOI list and collect papers in a single folder, named after their titles, instead of downloading, converting and organizing each one manually. Images are excluded; check visual information and important conclusions against the original paper.
 
 Inline and display equations are retained as LaTeX math. Check important PDF formulas against the source. Existing Markdown is not updated automatically.
 
